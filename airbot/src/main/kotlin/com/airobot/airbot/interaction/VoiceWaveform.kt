@@ -1,4 +1,4 @@
-package com.airobot.airbot.character
+package com.airobot.airbot.interaction
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -43,7 +43,7 @@ fun VoiceWaveform(
                 ),
                 label = "baseHeight"
             )
-            
+
             // 鎬婚珮搴︼細鍩虹鍔ㄧ敾 + 闊抽寮哄害褰卞搷
             val totalScale = if (isActive) {
                 (baseScale + audioLevel * 1.2f + (index * 0.05f)).coerceIn(0.15f, 1f)
@@ -73,7 +73,7 @@ fun SpeakingDots(
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "speakingDots")
-    
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -89,7 +89,7 @@ fun SpeakingDots(
                 ),
                 label = "dotOffset"
             )
-            
+
             Box(
                 modifier = Modifier
                     .size(8.dp)

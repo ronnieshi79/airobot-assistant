@@ -27,7 +27,7 @@ import com.airobot.framework.comp.BackgroundDecorations
 import com.airobot.framework.comp.BottomFooter
 import com.airobot.assistant.settings.AiRobotDialog
 import com.airobot.airbot.dialogue.DialogueBubble
-import com.airobot.airbot.character.RobotVoiceInputPanel
+import com.airobot.airbot.interaction.RobotVoiceInputPanel
 import com.airobot.framework.statusbar.RobotTopBar
 import com.airobot.framework.drawer.SystemDrawer
 import com.airobot.framework.drawer.DrawerMenuItemData

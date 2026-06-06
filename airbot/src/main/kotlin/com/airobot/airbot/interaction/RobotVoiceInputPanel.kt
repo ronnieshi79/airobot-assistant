@@ -1,4 +1,4 @@
-package com.airobot.airbot.character
+package com.airobot.airbot.interaction
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -32,9 +32,9 @@ import com.airobot.framework.theme.RobotTheme
 
 /**
  * 机器人风格语音输入面板
- * 
+ *
  * Web原型对应: VoiceInputPanel.tsx
- * 
+ *
  * 功能:
  * - 空闲状态：麦克风按钮 + 提示文字
  * - 聆听状态：波形动画 + 状态提示
@@ -59,7 +59,7 @@ fun RobotVoiceInputPanel(
     val isThinking = robotState == RobotVisualState.THINKING
     val isSpeaking = robotState == RobotVisualState.SPEAKING
     val isTimerActive = serviceSubState != ServiceSubState.IDLE
-    
+
     ConstraintLayout(
         modifier = modifier
     ) {
@@ -143,7 +143,7 @@ private fun IdleMicButton(
         ),
         label = "baseScale"
     )
-    
+
     // 动态声浪缩放 (叠加在呼吸之上)
     // audioLevel (0~1) -> extraScale (0~0.8)
     val dynamicScale by animateFloatAsState(
@@ -151,14 +151,14 @@ private fun IdleMicButton(
         animationSpec = spring(stiffness = Spring.StiffnessLow),
         label = "audioScale"
     )
-    
+
     val finalScale = if (audioLevel > 0.05f) dynamicScale else baseScale
 
     val ringAlpha by animateFloatAsState(
         targetValue = if (audioLevel > 0.05f) 0.6f + (audioLevel * 0.4f) else 0.2f,
         label = "ringAlpha"
     )
-    
+
     Column(
         modifier = modifier.height(180.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -167,7 +167,7 @@ private fun IdleMicButton(
         // 麦克风按钮
         Box(
             modifier = Modifier
-                .size(110.dp) 
+                .size(110.dp)
                 .clickable(enabled = isConnected) { onStartListening() }, // 点击唤醒
             contentAlignment = Alignment.Center
         ) {
@@ -223,11 +223,11 @@ private fun IdleMicButton(
                         )
                 )
             }
-            
+
             // 按钮主体 (76 -> 70, 减小约 8%)
             Box(
                 modifier = Modifier
-                    .size(70.dp) 
+                    .size(70.dp)
                     .border(1.5.dp, Color.White.copy(alpha = 0.7f), CircleShape)
                     .clip(CircleShape)
                     .background(
@@ -260,7 +260,7 @@ private fun IdleMicButton(
                 )
             }
         }
-        
+
         // 提示文字 - 增加透明胶囊感
         VoiceHintText(
             text = if (isConnected) "叫名字，开始对话" else "等待连接..."
@@ -276,7 +276,7 @@ private fun VoiceHintText(text: String) {
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(32.dp))
-            .background(RobotTheme.colors.cardBg.copy(alpha = 0.95f)) 
+            .background(RobotTheme.colors.cardBg.copy(alpha = 0.95f))
             .border(1.dp, RobotTheme.colors.surfaceOverlay.copy(alpha = 0.1f), RoundedCornerShape(32.dp))
             .padding(horizontal = 24.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -290,7 +290,7 @@ private fun VoiceHintText(text: String) {
         )
         Text(
             text = text,
-            color = RobotTheme.colors.textPrimary, 
+            color = RobotTheme.colors.textPrimary,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 0.8.sp
@@ -312,7 +312,7 @@ private fun ActiveStatusPanel(
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "activeStatus")
-    
+
     Column(
         modifier = modifier.height(180.dp), // 同步高度
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -321,7 +321,7 @@ private fun ActiveStatusPanel(
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(32.dp))
-                .background(RobotTheme.colors.cardBg.copy(alpha = 0.8f)) 
+                .background(RobotTheme.colors.cardBg.copy(alpha = 0.8f))
                 .padding(horizontal = 32.dp, vertical = 18.dp)
                 .clickable(enabled = isListening) { onStopListening() },
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -329,11 +329,11 @@ private fun ActiveStatusPanel(
         ) {
             when {
                 isListening -> {
-                        VoiceWaveform(
-                            isActive = true,
-                            barColor = RobotTheme.colors.accent, // 紫色波形
-                            audioLevel = audioLevel
-                        )
+                    VoiceWaveform(
+                        isActive = true,
+                        barColor = RobotTheme.colors.accent, // 紫色波形
+                        audioLevel = audioLevel
+                    )
                         Text(
                             text = "请说话...",
                             color = RobotTheme.colors.textPrimary.copy(alpha = 0.8f),
@@ -372,7 +372,7 @@ private fun ActiveStatusPanel(
                         dotColor = RobotTheme.colors.accent
                     )
                     Text(
-                        text = "正在播放回复", 
+                        text = "正在播放回复",
                         color = RobotTheme.colors.textPrimary,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
@@ -410,8 +410,8 @@ private fun QuickCommandChips(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(
-                    text = text, 
-                    color = RobotTheme.colors.textPrimary.copy(alpha = 0.8f), 
+                    text = text,
+                    color = RobotTheme.colors.textPrimary.copy(alpha = 0.8f),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -430,7 +430,7 @@ private fun TimerControlPanel(
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "timerControl")
-    
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -442,9 +442,9 @@ private fun TimerControlPanel(
                 .size(64.dp)
                 .clip(CircleShape)
                 .background(
-                    if (serviceSubState == ServiceSubState.PAUSED) 
-                        RobotTheme.colors.surfaceOverlay.copy(alpha = 0.2f) 
-                    else 
+                    if (serviceSubState == ServiceSubState.PAUSED)
+                        RobotTheme.colors.surfaceOverlay.copy(alpha = 0.2f)
+                    else
                         RobotTheme.colors.surfaceOverlay.copy(alpha = 0.1f)
                 ),
             contentAlignment = Alignment.Center
@@ -471,13 +471,13 @@ private fun TimerControlPanel(
                 painter = painterResource(id = R.drawable.timer),
                 contentDescription = null,
                 modifier = Modifier.size(28.dp),
-                tint = if (serviceSubState == ServiceSubState.PAUSED) 
+                tint = if (serviceSubState == ServiceSubState.PAUSED)
                     RobotTheme.colors.textMuted
-                else 
+                else
                     RobotTheme.colors.accent
             )
         }
-        
+
         // 控制按钮
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -498,7 +498,7 @@ private fun TimerControlPanel(
                     onClick = { onTimerControl("RESUME") }
                 )
             }
-            
+
             // 停止按钮
             TimerControlChip(
                 iconResId = R.drawable.close, // stop icon

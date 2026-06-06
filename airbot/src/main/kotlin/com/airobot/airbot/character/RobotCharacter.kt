@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.airobot.airbot.character.rive.RiveCharacter
 import com.airobot.airbot.state.RobotVisualState
 import com.airobot.framework.theme.RobotAntennaStemDark
 import com.airobot.framework.theme.RobotAntennaStemLight
@@ -75,7 +76,7 @@ fun RobotCharacter(
 
 /**
  * 机器人角色主组件 - 增强版 (原生 Canvas 动画)
- * 
+ *
  * 对应原型: IPCharacter.tsx
  */
 @Composable
@@ -87,7 +88,7 @@ private fun CanvasRobotCharacter(
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "robotAnimation")
-    
+
     // 悬浮动画 (Floating) - 范围加大，更生动
     val floatOffset by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -98,7 +99,7 @@ private fun CanvasRobotCharacter(
         ),
         label = "floatOffset"
     )
-    
+
     // 眨眼状态逻辑 (使用 Random 实现随机性)
     var isBlinking by remember { mutableStateOf(false) }
     LaunchedEffect(state) {
@@ -106,12 +107,12 @@ private fun CanvasRobotCharacter(
             // 随机间隔 2s - 7s
             val delayTime = Random.nextLong(2000, 7000)
             delay(delayTime)
-            
+
             if (state == RobotVisualState.IDLE || state == RobotVisualState.HAPPY || state == RobotVisualState.LISTENING) {
                 isBlinking = true
                 delay(150)
                 isBlinking = false
-                
+
                 // 偶尔双眨眼 (15% 概率)
                 if (Random.nextFloat() < 0.15f) {
                     delay(100)
@@ -130,7 +131,7 @@ private fun CanvasRobotCharacter(
         // 增强型背景环境光 (双层光晕 + 呼吸感)
         val auraColor = RobotTheme.colors.robotAuraStart
         val auraAlpha = if (RobotTheme.isDark) 0.55f else 0.7f // 提高不透明度
-        
+
         val auraScale by infiniteTransition.animateFloat(
             initialValue = 1.0f,
             targetValue = 1.15f,
@@ -145,7 +146,7 @@ private fun CanvasRobotCharacter(
         Box(
             modifier = Modifier
                 .size(headSize * 1.5f)
-                .graphicsLayer { 
+                .graphicsLayer {
                     alpha = auraAlpha
                     scaleX = auraScale
                     scaleY = auraScale
@@ -160,12 +161,12 @@ private fun CanvasRobotCharacter(
                 )
                 .blur(60.dp)
         )
-        
+
         // 外层大光晕 (扩散感)
         Box(
             modifier = Modifier
                 .size(headSize * 2.1f)
-                .graphicsLayer { 
+                .graphicsLayer {
                     alpha = auraAlpha * 0.5f
                     scaleX = auraScale * 1.3f
                     scaleY = auraScale * 1.3f
@@ -180,7 +181,7 @@ private fun CanvasRobotCharacter(
                 )
                 .blur(100.dp)
         )
-        
+
         // 主体结构
         Column(
             modifier = Modifier
@@ -188,7 +189,7 @@ private fun CanvasRobotCharacter(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 状态提示气泡已移除，迁移到功能卡片组件
-            
+
             // 机器人头部
             RobotHead(
                 state = state,
@@ -197,14 +198,14 @@ private fun CanvasRobotCharacter(
                 audioLevel = audioLevel,
                 headSize = headSize
             )
-            
+
             // 地面阴影 - 跟随浮动轻微缩放
             Box(
                 modifier = Modifier
                     .offset(y = (-10).dp)
                     .width(headSize * 0.6f)
                     .height(20.dp)
-                    .graphicsLayer { 
+                    .graphicsLayer {
                         alpha = if (state == RobotVisualState.IDLE) 0.2f else 0.4f
                         scaleX = if (state == RobotVisualState.IDLE) 0.85f + (floatOffset / 120f) else 1f
                     }
@@ -212,7 +213,7 @@ private fun CanvasRobotCharacter(
                     .background(Color.Black)
                     .blur(20.dp)
             )
-            
+
             // 底部脖子和领子
             RobotNeck(headSize = headSize)
         }
@@ -232,7 +233,7 @@ private fun RobotHead(
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "headAnimation")
-    
+
     Box(
         modifier = modifier
             .width(headSize * 1.1f) // 扩宽容器，容纳突出的耳朵
@@ -245,7 +246,7 @@ private fun RobotHead(
             headSize = headSize,
             infiniteTransition = infiniteTransition
         )
-        
+
         // 耳朵 (移出头部裁剪 Box，并添加 3D 轮廓层)
         Box(
             modifier = Modifier.width(headSize * 1.08f),
@@ -272,7 +273,7 @@ private fun RobotHead(
                         .background(RobotHeadColor)
                 )
             }
-            
+
             // 右耳
             Box(
                 modifier = Modifier.align(Alignment.CenterEnd)
@@ -295,7 +296,7 @@ private fun RobotHead(
                 )
             }
         }
-        
+
         // 头部外壳 - 改为浅蓝色 (sky-200)
         Box(
             modifier = Modifier
@@ -374,7 +375,7 @@ private fun RobotHead(
                         eyeSize = headSize * 0.17f,
                         eyeGap = headSize * 0.2f
                     )
-                
+
                 // 嘴巴动画
                 val isSpeaking = state == RobotVisualState.SPEAKING
                 val isIdle = state == RobotVisualState.IDLE || state == RobotVisualState.LISTENING
@@ -508,7 +509,7 @@ private fun SpeakingMouth(
         ),
         label = "mouthScale"
     )
-    
+
     Box(
         modifier = modifier
             .width(32.dp * mouthScale)

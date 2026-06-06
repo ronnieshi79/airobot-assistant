@@ -1,4 +1,4 @@
-package com.airobot.airbot.character
+package com.airobot.airbot.character.rive
 
 import android.util.Log
 import androidx.compose.runtime.*
