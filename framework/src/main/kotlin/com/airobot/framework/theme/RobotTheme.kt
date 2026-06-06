@@ -142,3 +142,11 @@ object RobotTheme {
         @ReadOnlyComposable
         get() = LocalRobotThemeMode.current == RobotThemeMode.DARK
 }
+
+/**
+ * AIRobot 布局尺寸常量约定
+ */
+object RobotDimensions {
+    const val CharacterWidthRatio = 2.0f
+    const val CharacterHeightRatio = 1.8f
+}

@@ -29,6 +29,7 @@ import com.airobot.framework.theme.RobotHeadBorder
 import com.airobot.framework.theme.RobotHeadColor
 import com.airobot.framework.theme.RobotNeckColor
 import com.airobot.framework.theme.RobotTheme
+import com.airobot.framework.theme.RobotDimensions
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
@@ -45,22 +46,29 @@ fun RobotCharacter(
     headSize: Dp = 320.dp,
     modifier: Modifier = Modifier
 ) {
-    when (characterType) {
-        CharacterType.ANDROID_CANVAS -> {
-            CanvasRobotCharacter(
-                state = state,
-                ttsProgressNormalized = ttsProgressNormalized,
-                audioLevel = audioLevel,
-                headSize = headSize,
-                modifier = modifier
-            )
-        }
-        CharacterType.RIVE_IP -> {
-            RiveCharacter(
-                state = state,
-                audioLevel = audioLevel,
-                modifier = modifier
-            )
+    Box(
+        modifier = modifier
+            .width(headSize * RobotDimensions.CharacterWidthRatio)
+            .height(headSize * RobotDimensions.CharacterHeightRatio),
+        contentAlignment = Alignment.Center
+    ) {
+        when (characterType) {
+            CharacterType.ANDROID_CANVAS -> {
+                CanvasRobotCharacter(
+                    state = state,
+                    ttsProgressNormalized = ttsProgressNormalized,
+                    audioLevel = audioLevel,
+                    headSize = headSize,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            CharacterType.RIVE_IP -> {
+                RiveCharacter(
+                    state = state,
+                    audioLevel = audioLevel,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }
@@ -116,9 +124,7 @@ private fun CanvasRobotCharacter(
     }
 
     Box(
-        modifier = modifier
-            .width(headSize * 2.0f) 
-            .height(headSize * 1.8f),
+        modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
         // 增强型背景环境光 (双层光晕 + 呼吸感)
