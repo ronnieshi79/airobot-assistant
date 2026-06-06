@@ -1,8 +1,9 @@
-﻿package com.airobot.core.system
+package com.airobot.core.system
 
 import android.content.Context
 import com.airobot.core.system.model.ActiveInfo
 import com.airobot.core.system.model.AiAgent
+import com.airobot.core.system.model.AiRobot
 import com.airobot.core.system.model.CommCredentials
 import com.airobot.core.system.model.DeviceInfo
 import com.airobot.core.system.model.SystemInfo
@@ -221,14 +222,40 @@ class SysManageImpl @Inject constructor(
             var sInfo = sysInfoRepo.loadConfig()
             
             // Check if initialization is needed (empty device Id)
+            var needsSave = false
             if (sInfo.deviceInfo.deviceId.isEmpty()) {
                  val deviceInfo = DeviceInfo.create(context)
                  
                  // Re-construct SystemInfo with initialized data
                  // deviceInfo.create already handles default empty activation
                  sInfo = sInfo.copy(deviceInfo = deviceInfo)
-                 
-                 // Save the initialized config
+                 needsSave = true
+            }
+
+            // Seed default roles if array is completely empty/null
+            if (sInfo.aiRobotArray.all { it == null }) {
+                val defaultRoles = arrayOf(
+                    AiRobot(
+                        roleName = "Aether",
+                        characterType = "ANDROID_CANVAS",
+                        personality = "科技智慧、温暖陪伴",
+                        voiceModel = "火山模型",
+                        wakeWords = "小叶,小宁"
+                    ),
+                    AiRobot(
+                        roleName = "心小苗",
+                        characterType = "RIVE_IP",
+                        personality = "温暖治愈、积极乐观、专业可靠、陪伴成长",
+                        voiceModel = "火山模型",
+                        wakeWords = "小苗,心苗"
+                    ),
+                    null
+                )
+                sInfo = sInfo.copy(aiRobotArray = defaultRoles, activeRoleIndex = 0)
+                needsSave = true
+            }
+
+            if (needsSave) {
                  sysInfoRepo.saveConfig(sInfo)
             }
             _systemInfo = sInfo

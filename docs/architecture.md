@@ -33,7 +33,11 @@ airobot-assistant/
 │   │   └── RobotApplication.kt
 ├── airbot/                       # 👽 虚拟角色核心模块 (Android Library)
 │   └── src/main/kotlin/com/airobot/airbot/
-│       ├── character/            # 视觉动效组件
+│       ├── character/            # 多引擎视觉动效组件 (Canvas + Rive)
+│       │   ├── CharacterType.kt  # 角色引擎类型
+│       │   ├── RobotCharacter.kt # 引擎调度器
+│       │   ├── RiveCharacter.kt  # Rive 角色渲染
+│       │   └── ...               # Canvas 角色组件 (Aether)
 │       ├── dialogue/             # 气泡与对话UI组件
 │       ├── state/                # 状态与模型定义
 │       └── viewmodel/            # 交互状态调度与ViewModel
@@ -68,7 +72,7 @@ airobot-assistant/
 
 ### 业务结构与组装层解耦 (Framework, Airbot & Services)
 - **Framework ( UI底层 )**: 全局的 `com.airobot.framework` 作为无状态基础组件库，**禁止**依赖任何具体 `ViewModel` 逻辑及全家桶状态引擎。它只接收原语类型 (Primitive typed args) 负责呈现视图。
-- **Airbot ( 角色层 )**: 独立的渲染表达层，内部收敛如Rive/Lottie等引擎实现，使用外部透传的抽象状态，避免环形依赖主业务流程的上下文。
+- **Airbot ( 角色层 )**: 独立的渲染表达层，支持多角色多引擎切换（Aether原生Canvas + Rive IP），内部收敛引擎实现，通过`CharacterType`以纯组件形式提供，使用外部透传的抽象状态，避免环形依赖主业务流程的上下文。
 - **Core ( 核心与系统 )**: 整合了 `core-comm` (通讯协议) 与 `system` (系统管理)。负责设备激活、OTA、与 AI Agent 的底层握手。
 - **Services ( 服务卡片层 )**: 专注提供番茄钟、天气等卡片，具有自包含的状态体系 (`ServiceCardData` 等)，不再强耦合系统顶级 `RobotEngineState`。
 - **App Shell**: 主 `app` 模块专门负责顶层组装，从 Hilt 提取网络协议层 (`core`) 的状态流向下分发，提供纯净的胶水调用实现多 App 形态。

@@ -47,6 +47,7 @@ import com.airobot.assistant.viewmodel.MainShellViewModel
 import com.airobot.airbot.viewmodel.ConversationViewModel
 import com.airobot.services.ServiceViewModel
 import com.airobot.airbot.character.RobotCharacter
+import com.airobot.airbot.character.CharacterType
 import com.airobot.framework.theme.StatusAmber
 import com.airobot.framework.theme.StatusCyan
 import com.airobot.framework.theme.StatusEmerald
@@ -79,6 +80,9 @@ fun AppMainScreen(
     val showActivationDialog by mainShellViewModel.showActivationDialog.collectAsState()
     val activationCode by mainShellViewModel.activationCode.collectAsState()
     val mainVoiceLevel by mainShellViewModel.voiceLevel.collectAsState()
+    val systemInfo by mainShellViewModel.systemInfo.collectAsState()
+    val activeRole = systemInfo.aiRobotArray.getOrNull(systemInfo.activeRoleIndex)
+    val characterType = CharacterType.fromString(activeRole?.characterType ?: "ANDROID_CANVAS")
 
     // 从 ConversationViewModel 收集交互状态
     val convAudioLevel by conversationViewModel.audioLevel.collectAsState()
@@ -193,7 +197,12 @@ fun AppMainScreen(
 
     val drawerMenuItems = listOf(
         DrawerMenuItemData(Icons.Default.Lock, "系统认证", "系统认证信息") { SystemAuth() },
-        DrawerMenuItemData(Icons.Default.Person, "角色管理", "角色管理") { RoleConfig() },
+        DrawerMenuItemData(Icons.Default.Person, "角色管理", "角色管理") {
+            RoleConfig(
+                systemInfo = systemInfo,
+                onRoleSelected = { index -> mainShellViewModel.updateActiveRole(index) }
+            )
+        },
         DrawerMenuItemData(Icons.Default.Settings, "Ai智能体", "Ai智能体配置") { AiRobotConfig() }
     )
 
@@ -279,6 +288,7 @@ fun AppMainScreen(
                     ) {
                         RobotCharacter(
                             state = robotUiState.visualState,
+                            characterType = characterType,
                             audioLevel = { audioLevel }, // 传入音频等级用于微表情
                             headSize = 400.dp // 420 -> 400 稍微缩小一点点
                         )

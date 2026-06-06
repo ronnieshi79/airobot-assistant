@@ -51,4 +51,8 @@ dependencies {
     
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    // Rive and Android Startup
+    implementation(libs.rive.android)
+    implementation(libs.androidx.startup)
 }

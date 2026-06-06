@@ -224,6 +224,16 @@ class MainShellViewModel @Inject constructor(
         }
     }
 
+    fun updateActiveRole(index: Int) {
+        viewModelScope.launch {
+            val currentInfo = sysManage.systemInfo.value
+            if (index in 0 until currentInfo.aiRobotArray.size && currentInfo.aiRobotArray[index] != null) {
+                val updatedInfo = currentInfo.copy(activeRoleIndex = index)
+                sysManage.updateSystemInfo(updatedInfo)
+            }
+        }
+    }
+
     // System Info Exposure (Reactive)
     val systemInfo: StateFlow<SystemInfo> = sysManage.systemInfo
 

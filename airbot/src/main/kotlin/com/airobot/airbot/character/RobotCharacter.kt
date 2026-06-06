@@ -34,12 +34,44 @@ import kotlin.random.Random
 
 
 /**
- * 机器人角色主组件 - 增强版
+ * 机器人角色主组件 - 支持多引擎切换调度
+ */
+@Composable
+fun RobotCharacter(
+    state: RobotVisualState,
+    characterType: CharacterType = CharacterType.ANDROID_CANVAS,
+    ttsProgressNormalized: Float = 0f,
+    audioLevel: () -> Float = { 0f },
+    headSize: Dp = 320.dp,
+    modifier: Modifier = Modifier
+) {
+    when (characterType) {
+        CharacterType.ANDROID_CANVAS -> {
+            CanvasRobotCharacter(
+                state = state,
+                ttsProgressNormalized = ttsProgressNormalized,
+                audioLevel = audioLevel,
+                headSize = headSize,
+                modifier = modifier
+            )
+        }
+        CharacterType.RIVE_IP -> {
+            RiveCharacter(
+                state = state,
+                audioLevel = audioLevel,
+                modifier = modifier
+            )
+        }
+    }
+}
+
+/**
+ * 机器人角色主组件 - 增强版 (原生 Canvas 动画)
  * 
  * 对应原型: IPCharacter.tsx
  */
 @Composable
-fun RobotCharacter(
+private fun CanvasRobotCharacter(
     state: RobotVisualState,
     ttsProgressNormalized: Float = 0f,
     audioLevel: () -> Float = { 0f }, // 传入音频等级 (Lambda)

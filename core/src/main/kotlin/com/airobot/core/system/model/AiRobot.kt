@@ -1,4 +1,4 @@
-﻿package com.airobot.core.system.model
+package com.airobot.core.system.model
 
 import java.util.UUID
 
@@ -38,6 +38,15 @@ data class AiRobot(
     // airobot role
     val roleName: String = "小美",
     val roleId: String = UUID.randomUUID().toString(), // airobotActivate role-uuid
+
+    // character rendering engine: "ANDROID_CANVAS" | "RIVE_IP"
+    val characterType: String = "ANDROID_CANVAS",
+    // role personality description (for UI display & future AI prompt)
+    val personality: String = "",
+    // voice model identifier (for future voice switching)
+    val voiceModel: String = "火山模型",
+    // wake words (comma-separated, for future KWS switching)
+    val wakeWords: String = "小叶,小宁",
 
     // agent of airobot
     val aiAgent: AiAgent = AiAgent()

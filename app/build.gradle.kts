@@ -98,6 +98,7 @@ android {
     packaging {
         jniLibs {
             useLegacyPackaging = true
+            pickFirsts.add("lib/*/libc++_shared.so")
         }
     }
 }

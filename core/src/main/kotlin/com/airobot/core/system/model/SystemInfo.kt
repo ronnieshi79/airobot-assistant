@@ -1,4 +1,4 @@
-﻿package com.airobot.core.system.model
+package com.airobot.core.system.model
 
 import java.util.UUID
 
@@ -14,7 +14,9 @@ data class SystemInfo (
     // airobot info，include agentinfo and role
     val aiAgent: AiAgent = AiAgent(),
     val aiRobotNux: Byte = 3,     // airobot role number
-    val aiRobotArray: Array<AiRobot?> = Array(size = aiRobotNux.toInt()) { null }
+    val aiRobotArray: Array<AiRobot?> = Array(size = aiRobotNux.toInt()) { null },
+    // Index of the currently active role (0-based)
+    val activeRoleIndex: Int = 0
 ){
     // Convenience property for backward compatibility
     @Deprecated("Use deviceInfo.activation instead", ReplaceWith("deviceInfo.activation"))
@@ -33,6 +35,7 @@ data class SystemInfo (
         if (aiAgent != other.aiAgent) return false
         if (aiRobotNux != other.aiRobotNux) return false
         if (!aiRobotArray.contentEquals(other.aiRobotArray)) return false
+        if (activeRoleIndex != other.activeRoleIndex) return false
 
         return true
     }
@@ -44,6 +47,7 @@ data class SystemInfo (
         result = 31 * result + aiAgent.hashCode()
         result = 31 * result + aiRobotNux
         result = 31 * result + aiRobotArray.contentHashCode()
+        result = 31 * result + activeRoleIndex
         return result
     }
 }
