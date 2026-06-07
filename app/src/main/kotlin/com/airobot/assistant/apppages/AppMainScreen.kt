@@ -293,8 +293,7 @@ fun AppMainScreen(
                             characterType = characterType,
                             roleName = activeRole?.roleName,
                             audioLevel = { audioLevel }, // 传入音频等级用于微表情
-                            headSize = 400.dp, // 保持原大小
-                            modifier = Modifier.fillMaxSize()
+                            headSize = 400.dp // 保持原大小
                         )
                     }
                     // 2. 语音输入面板 (下移 15%，增大底部间距)

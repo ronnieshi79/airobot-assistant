@@ -1,23 +1,23 @@
 [
-  {
-    "name": "心小苗",
-    "resourceName": "xin_xiao_miao",
-    "scale": 1.15,
-    "offsetX": 0.0,
-    "offsetY": 0.0
-  },
-  {
-    "name": "小白",
-    "resourceName": "robot_xiao_bai",
-    "scale": 1.6,
-    "offsetX": 0.0,
-    "offsetY": -35.0
-  },
-  {
-    "name": "花小小",
-    "resourceName": "hua_xiao_xiao",
-    "scale": 1.25,
-    "offsetX": 0.0,
-    "offsetY": -10.0
-  }
+    {
+        "name": "心小苗",
+        "resourceName": "xin_xiao_miao",
+        "scale": 1.1,
+        "offsetX": 0.0,
+        "offsetY": 0.0
+    },
+    {
+        "name": "小白",
+        "resourceName": "robot_xiao_bai",
+        "scale": 1.7,
+        "offsetX": 5.0,
+        "offsetY": 5.0
+    },
+    {
+        "name": "花小小",
+        "resourceName": "hua_xiao_xiao",
+        "scale": 1.5,
+        "offsetX": 0.0,
+        "offsetY": 0.0
+    }
 ]

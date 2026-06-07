@@ -3,6 +3,8 @@ package com.airobot.airbot.character
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,6 +18,8 @@ import com.airobot.airbot.character.aether.AetherCharacter
 import com.airobot.airbot.character.rive.RiveCharacter
 import com.airobot.airbot.character.rive.RiveCharacterConfigManager
 import com.airobot.airbot.state.RobotVisualState
+
+import com.airobot.framework.theme.RobotDimensions
 
 /**
  * 机器人角色主组件 - 支持多引擎切换调度
@@ -32,7 +36,9 @@ fun RobotCharacter(
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier,
+        modifier = modifier
+            .width(headSize * RobotDimensions.CharacterWidthRatio)
+            .height(headSize * RobotDimensions.CharacterHeightRatio),
         contentAlignment = Alignment.Center
     ) {
         when (characterType) {
