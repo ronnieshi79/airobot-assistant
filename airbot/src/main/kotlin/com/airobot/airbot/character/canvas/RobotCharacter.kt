@@ -1,4 +1,4 @@
-package com.airobot.airbot.character
+package com.airobot.airbot.character.canvas
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -18,7 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.airobot.airbot.character.rive.RiveCharacter
+import com.airobot.airbot.character.CharacterType
+import com.airobot.airbot.character.RiveCharacter
 import com.airobot.airbot.state.RobotVisualState
 import com.airobot.framework.theme.RobotAntennaStemDark
 import com.airobot.framework.theme.RobotAntennaStemLight
@@ -42,6 +43,7 @@ import kotlin.random.Random
 fun RobotCharacter(
     state: RobotVisualState,
     characterType: CharacterType = CharacterType.ANDROID_CANVAS,
+    roleName: String? = null,
     ttsProgressNormalized: Float = 0f,
     audioLevel: () -> Float = { 0f },
     headSize: Dp = 320.dp,
@@ -66,6 +68,7 @@ fun RobotCharacter(
             CharacterType.RIVE_IP -> {
                 RiveCharacter(
                     state = state,
+                    roleName = roleName,
                     audioLevel = audioLevel,
                     modifier = Modifier.fillMaxSize()
                 )

@@ -232,26 +232,47 @@ class SysManageImpl @Inject constructor(
                  needsSave = true
             }
 
-            // Seed default roles if array is completely empty/null
-            if (sInfo.aiRobotArray.all { it == null }) {
-                val defaultRoles = arrayOf(
-                    AiRobot(
-                        roleName = "Aether",
-                        characterType = "ANDROID_CANVAS",
-                        personality = "科技智慧、温暖陪伴",
-                        voiceModel = "火山模型",
-                        wakeWords = "小叶,小宁"
-                    ),
-                    AiRobot(
-                        roleName = "心小苗",
-                        characterType = "RIVE_IP",
-                        personality = "温暖治愈、积极乐观、专业可靠、陪伴成长",
-                        voiceModel = "火山模型",
-                        wakeWords = "小苗,心苗"
-                    ),
-                    null
+            val defaultRoles = arrayOf<AiRobot?>(
+                AiRobot(
+                    roleName = "Aether",
+                    characterType = "ANDROID_CANVAS",
+                    personality = "科技智慧、温暖陪伴",
+                    voiceModel = "火山模型",
+                    wakeWords = "小叶,小宁"
+                ),
+                AiRobot(
+                    roleName = "心小苗",
+                    characterType = "RIVE_IP",
+                    personality = "温暖治愈、积极乐观、专业可靠、陪伴成长",
+                    voiceModel = "火山模型",
+                    wakeWords = "心小苗,小苗,心苗"
+                ),
+                AiRobot(
+                    roleName = "小白",
+                    characterType = "RIVE_IP",
+                    personality = "机智活泼、充满好奇",
+                    voiceModel = "火山模型",
+                    wakeWords = "小白"
+                ),
+                AiRobot(
+                    roleName = "花小小",
+                    characterType = "RIVE_IP",
+                    personality = "古灵精怪、热爱生活",
+                    voiceModel = "火山模型",
+                    wakeWords = "花小小"
                 )
-                sInfo = sInfo.copy(aiRobotArray = defaultRoles, activeRoleIndex = 0)
+            )
+
+            // Seed default roles if array is completely empty/null or size < 4 or default roles are missing
+            val hasAllDefaultRoles = defaultRoles.all { def ->
+                sInfo.aiRobotArray.any { it?.roleName == def?.roleName }
+            }
+            if (sInfo.aiRobotArray.size < 4 || !hasAllDefaultRoles || sInfo.aiRobotArray.all { it == null }) {
+                sInfo = sInfo.copy(
+                    aiRobotNux = 4.toByte(),
+                    aiRobotArray = defaultRoles,
+                    activeRoleIndex = 0
+                )
                 needsSave = true
             }
 

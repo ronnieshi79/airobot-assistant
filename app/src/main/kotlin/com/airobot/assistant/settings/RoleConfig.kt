@@ -1,6 +1,8 @@
 package com.airobot.assistant.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -20,9 +22,8 @@ import com.airobot.framework.theme.RobotTheme
 
 /**
  * 角色管理配置页面
- * 展示当前角色的切换下拉框，以及对应的角色引擎、语音模型、唤醒词等配置。
+ * 展示当前角色的切换 Tab 按钮，以及对应的动画引擎、语音模型、唤醒词等配置。
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoleConfig(
     systemInfo: SystemInfo,
@@ -31,7 +32,6 @@ fun RoleConfig(
     val roles = systemInfo.aiRobotArray.filterNotNull()
     val activeIndex = systemInfo.activeRoleIndex
     val activeRole = systemInfo.aiRobotArray.getOrNull(activeIndex) ?: roles.firstOrNull()
-    var expanded by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
@@ -43,41 +43,36 @@ fun RoleConfig(
             fontWeight = FontWeight.Bold
         )
 
-        Box(modifier = Modifier.fillMaxWidth()) {
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }
-            ) {
-                OutlinedTextField(
-                    value = activeRole?.roleName ?: "无",
-                    onValueChange = {},
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
-                        focusedTextColor = RobotTheme.colors.textPrimary,
-                        unfocusedTextColor = RobotTheme.colors.textPrimary,
-                        focusedBorderColor = RobotTheme.colors.accent,
-                        unfocusedBorderColor = RobotTheme.colors.cardBorder
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor()
-                )
-
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    systemInfo.aiRobotArray.forEachIndexed { index, robot ->
-                        if (robot != null) {
-                            DropdownMenuItem(
-                                text = { Text(robot.roleName) },
-                                onClick = {
-                                    onRoleSelected(index)
-                                    expanded = false
-                                }
-                            )
-                        }
+        // Pill-segmented Tab Row for switching roles (maximum 4)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(RobotTheme.colors.cardBg)
+                .border(1.dp, RobotTheme.colors.cardBorder, RoundedCornerShape(12.dp))
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            systemInfo.aiRobotArray.forEachIndexed { index, robot ->
+                if (robot != null) {
+                    val isSelected = activeIndex == index
+                    val bgSelectedColor = RobotTheme.colors.accent.copy(alpha = 0.15f)
+                    
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isSelected) bgSelectedColor else androidx.compose.ui.graphics.Color.Transparent)
+                            .clickable { onRoleSelected(index) }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = robot.roleName,
+                            color = if (isSelected) RobotTheme.colors.accent else RobotTheme.colors.textSecondary,
+                            fontSize = 14.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        )
                     }
                 }
             }
@@ -85,30 +80,16 @@ fun RoleConfig(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // —— 角色详情 ——
-        Text(
-            "角色信息",
-            color = RobotTheme.colors.textSecondary,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
-        )
-
+        // —— 角色详情配置 ——
         val engineDisplay = when (activeRole?.characterType) {
             "ANDROID_CANVAS" -> "原生 Canvas 动画 (Aether)"
-            "RIVE_IP" -> "Rive 引擎动画 (心小苗)"
+            "RIVE_IP" -> "Rive 引擎动画 (${activeRole.roleName})"
             else -> activeRole?.characterType ?: "未知引擎"
         }
 
         ConfigTextField(
-            label = "形象模型引擎",
+            label = "动画引擎",
             value = engineDisplay,
-            onValueChange = {},
-            readOnly = true
-        )
-
-        ConfigTextField(
-            label = "性格特征",
-            value = activeRole?.personality ?: "无",
             onValueChange = {},
             readOnly = true
         )

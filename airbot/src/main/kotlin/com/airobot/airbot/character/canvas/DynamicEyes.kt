@@ -1,4 +1,4 @@
-package com.airobot.airbot.character
+package com.airobot.airbot.character.canvas
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -116,7 +116,7 @@ private fun EnhancedDynamicEye(
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "eyeGlowPulse")
-    
+
     // 基础发光呼吸效果
     val glowPulse by infiniteTransition.animateFloat(
         initialValue = 0.8f,
@@ -235,7 +235,7 @@ private fun ThinkingEyeEnhanced(
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "thinkingEyeArch")
-    
+
     // 呼吸感：粗细与位置轻微变动
     val breath by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -275,7 +275,7 @@ private fun SpeakingEyeEnhanced(
     modifier: Modifier = Modifier
 ) {
     val audioEffect = audioLevel()
-    
+
     // 说话时也是橙色拱形，但会随着声音波动“张合”
     Box(
         modifier = modifier.size(size),
@@ -286,7 +286,7 @@ private fun SpeakingEyeEnhanced(
             // 扫过角度随音频变化，产生眨动感
             val sweep = 180f - (audioEffect * 20f)
             val start = 180f + (audioEffect * 10f)
-            
+
             drawArc(
                 color = RobotEyeActive,
                 startAngle = start,

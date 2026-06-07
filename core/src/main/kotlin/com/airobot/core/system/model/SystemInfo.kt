@@ -13,7 +13,7 @@ data class SystemInfo (
 
     // airobot info，include agentinfo and role
     val aiAgent: AiAgent = AiAgent(),
-    val aiRobotNux: Byte = 3,     // airobot role number
+    val aiRobotNux: Byte = 4,     // airobot role number
     val aiRobotArray: Array<AiRobot?> = Array(size = aiRobotNux.toInt()) { null },
     // Index of the currently active role (0-based)
     val activeRoleIndex: Int = 0

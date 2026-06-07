@@ -46,7 +46,7 @@ import com.airobot.services.state.ServiceSubState
 import com.airobot.assistant.viewmodel.MainShellViewModel
 import com.airobot.airbot.viewmodel.ConversationViewModel
 import com.airobot.services.ServiceViewModel
-import com.airobot.airbot.character.RobotCharacter
+import com.airobot.airbot.character.canvas.RobotCharacter
 import com.airobot.airbot.character.CharacterType
 import com.airobot.framework.theme.StatusAmber
 import com.airobot.framework.theme.StatusCyan
@@ -289,6 +289,7 @@ fun AppMainScreen(
                         RobotCharacter(
                             state = robotUiState.visualState,
                             characterType = characterType,
+                            roleName = activeRole?.roleName,
                             audioLevel = { audioLevel }, // 传入音频等级用于微表情
                             headSize = 400.dp // 420 -> 400 稍微缩小一点点
                         )
