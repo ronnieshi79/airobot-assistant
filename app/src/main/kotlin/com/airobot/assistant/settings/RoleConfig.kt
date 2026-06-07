@@ -95,6 +95,13 @@ fun RoleConfig(
         )
 
         ConfigTextField(
+            label = "性格特征",
+            value = activeRole?.personality ?: "无",
+            onValueChange = {},
+            readOnly = true
+        )
+
+        ConfigTextField(
             label = "语音模型",
             value = activeRole?.voiceModel ?: "火山模型",
             onValueChange = {},
