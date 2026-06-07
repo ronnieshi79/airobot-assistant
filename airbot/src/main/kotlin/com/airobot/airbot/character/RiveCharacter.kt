@@ -90,22 +90,25 @@ fun RiveCharacter(
  */
 data class RiveCharacterEntry(
     val name: String,
-    val resourceName: String
+    val resourceName: String,
+    val scale: Float = 1.0f,
+    val offsetX: Float = 0f,
+    val offsetY: Float = 0f
 )
 
 /**
  * Configuration manager to dynamically load Rive characters mapping from rive_config.json.
  */
 object RiveCharacterConfigManager {
+    private var cachedEntries: List<RiveCharacterEntry>? = null
     private var cachedCharacters: List<Pair<String, Int>>? = null
 
-    fun getRiveCharacters(context: Context): List<Pair<String, Int>> {
-        if (cachedCharacters != null) return cachedCharacters!!
-
+    fun loadConfigIfNeeded(context: Context) {
+        if (cachedEntries != null) return
         synchronized(this) {
-            if (cachedCharacters != null) return cachedCharacters!!
-
+            if (cachedEntries != null) return
             val list = mutableListOf<Pair<String, Int>>()
+            val entriesList = mutableListOf<RiveCharacterEntry>()
             try {
                 context.assets.open("rive_config.json").use { inputStream ->
                     InputStreamReader(inputStream, Charsets.UTF_8).use { reader ->
@@ -123,6 +126,7 @@ object RiveCharacterConfigManager {
                                 // Filter out invalid configurations (resource not found)
                                 if (resId != 0) {
                                     list.add(Pair(entry.name, resId))
+                                    entriesList.add(entry)
                                 }
                                 // Limit to maximum 3 characters
                                 if (list.size >= 3) break
@@ -137,15 +141,22 @@ object RiveCharacterConfigManager {
             // Fallback default in case config is empty or completely invalid
             if (list.isEmpty()) {
                 list.add(Pair("心小苗", R.raw.xin_xiao_miao))
+                entriesList.add(RiveCharacterEntry("心小苗", "xin_xiao_miao", 1.15f, 0f, 0f))
             }
 
             cachedCharacters = list
-            return list
+            cachedEntries = entriesList
         }
     }
 
+    fun getRiveCharacters(context: Context): List<Pair<String, Int>> {
+        loadConfigIfNeeded(context)
+        return cachedCharacters!!
+    }
+
     fun getResourceForRole(context: Context, roleName: String?): Int {
-        val characters = getRiveCharacters(context)
+        loadConfigIfNeeded(context)
+        val characters = cachedCharacters!!
         if (roleName == null) return characters.first().second
         
         // Match by role name (case-insensitive)
@@ -153,5 +164,15 @@ object RiveCharacterConfigManager {
             it.first.equals(roleName, ignoreCase = true)
         }
         return match?.second ?: characters.first().second
+    }
+
+    fun getCharacterConfig(context: Context, roleName: String?): RiveCharacterEntry {
+        loadConfigIfNeeded(context)
+        val entries = cachedEntries!!
+        if (roleName == null) return entries.first()
+        val match = entries.find {
+            it.name.equals(roleName, ignoreCase = true)
+        }
+        return match ?: entries.first()
     }
 }

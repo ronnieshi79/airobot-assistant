@@ -33,7 +33,8 @@ fun RobotTopBar(
     stateColor: Color,
     errorMessage: String?,
     onLogoClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    robotName: String = "AETHER"
 ) {
     Row(
         modifier = modifier
@@ -71,8 +72,14 @@ fun RobotTopBar(
                 )
             }
             
+            val displayName = when (robotName.lowercase()) {
+                "aether" -> "AETHER"
+                "花小小", "hua_xiao_xiao", "huaxiaoxiao", "花笑笑" -> "花笑笑"
+                else -> robotName
+            }
+
             Text(
-                text = "AETHER",
+                text = displayName.uppercase(),
                 color = RobotTheme.colors.textPrimary,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Black,

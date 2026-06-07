@@ -20,7 +20,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.airobot.airbot.character.CharacterType
 import com.airobot.airbot.character.RiveCharacter
+import com.airobot.airbot.character.RiveCharacterConfigManager
 import com.airobot.airbot.state.RobotVisualState
+import androidx.compose.ui.draw.clipToBounds
 import com.airobot.framework.theme.RobotAntennaStemDark
 import com.airobot.framework.theme.RobotAntennaStemLight
 import com.airobot.framework.theme.RobotBlush
@@ -66,12 +68,32 @@ fun RobotCharacter(
                 )
             }
             CharacterType.RIVE_IP -> {
-                RiveCharacter(
-                    state = state,
-                    roleName = roleName,
-                    audioLevel = audioLevel,
-                    modifier = Modifier.fillMaxSize()
-                )
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val config = RiveCharacterConfigManager.getCharacterConfig(context, roleName)
+                val density = androidx.compose.ui.platform.LocalDensity.current
+                val translationX = with(density) { config.offsetX.dp.toPx() }
+                val translationY = with(density) { config.offsetY.dp.toPx() }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clipToBounds(), // Ensure character stays within the container boundaries
+                    contentAlignment = Alignment.Center
+                ) {
+                    RiveCharacter(
+                        state = state,
+                        roleName = roleName,
+                        audioLevel = audioLevel,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                scaleX = config.scale
+                                scaleY = config.scale
+                                this.translationX = translationX
+                                this.translationY = translationY
+                            }
+                    )
+                }
             }
         }
     }

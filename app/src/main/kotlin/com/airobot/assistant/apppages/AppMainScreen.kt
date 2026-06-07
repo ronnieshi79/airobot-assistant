@@ -260,7 +260,8 @@ fun AppMainScreen(
                     stateText = stateText,
                     stateColor = stateColor,
                     errorMessage = errorMessage,
-                    onLogoClick = { scope.launch { drawerState.open() } }
+                    onLogoClick = { scope.launch { drawerState.open() } },
+                    robotName = activeRole?.roleName ?: "AETHER"
                 )
 
                 // ErrorBanner 迁移到 TopBar 中，此处移除
