@@ -1,4 +1,4 @@
-package com.airobot.airbot.character.canvas
+package com.airobot.airbot.character.aether
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background

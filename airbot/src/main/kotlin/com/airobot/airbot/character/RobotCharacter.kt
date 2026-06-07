@@ -12,7 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.airobot.airbot.character.canvas.AetherCharacter
+import com.airobot.airbot.character.aether.AetherCharacter
 import com.airobot.airbot.character.rive.RiveCharacter
 import com.airobot.airbot.character.rive.RiveCharacterConfigManager
 import com.airobot.airbot.state.RobotVisualState
