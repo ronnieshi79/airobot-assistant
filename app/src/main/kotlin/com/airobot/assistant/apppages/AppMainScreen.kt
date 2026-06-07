@@ -288,13 +288,15 @@ fun AppMainScreen(
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        RobotCharacter(
-                            state = robotUiState.visualState,
-                            characterType = characterType,
-                            roleName = activeRole?.roleName,
-                            audioLevel = { audioLevel }, // 传入音频等级用于微表情
-                            headSize = 400.dp // 保持原大小
-                        )
+                        if (activeRole != null) {
+                            RobotCharacter(
+                                state = robotUiState.visualState,
+                                characterType = characterType,
+                                roleName = activeRole.roleName,
+                                audioLevel = { audioLevel }, // 传入音频等级用于微表情
+                                headSize = 400.dp // 保持原大小
+                            )
+                        }
                     }
                     // 2. 语音输入面板 (下移 15%，增大底部间距)
                     Box(
