@@ -1,4 +1,4 @@
-package com.airobot.airbot.character
+package com.airobot.airbot.character.rive
 
 import android.content.Context
 import android.util.Log
@@ -114,7 +114,7 @@ object RiveCharacterConfigManager {
                     InputStreamReader(inputStream, Charsets.UTF_8).use { reader ->
                         val type = object : TypeToken<List<RiveCharacterEntry>>() {}.type
                         val entries = Gson().fromJson<List<RiveCharacterEntry>>(reader, type)
-                        
+
                         if (entries != null) {
                             for (entry in entries) {
                                 // Dynamically look up the resource identifier
@@ -158,9 +158,9 @@ object RiveCharacterConfigManager {
         loadConfigIfNeeded(context)
         val characters = cachedCharacters!!
         if (roleName == null) return characters.first().second
-        
+
         // Match by role name (case-insensitive)
-        val match = characters.find { 
+        val match = characters.find {
             it.first.equals(roleName, ignoreCase = true)
         }
         return match?.second ?: characters.first().second

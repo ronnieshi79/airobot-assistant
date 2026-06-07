@@ -46,7 +46,7 @@ import com.airobot.services.state.ServiceSubState
 import com.airobot.assistant.viewmodel.MainShellViewModel
 import com.airobot.airbot.viewmodel.ConversationViewModel
 import com.airobot.services.ServiceViewModel
-import com.airobot.airbot.character.canvas.RobotCharacter
+import com.airobot.airbot.character.RobotCharacter
 import com.airobot.airbot.character.CharacterType
 import com.airobot.framework.theme.StatusAmber
 import com.airobot.framework.theme.StatusCyan
@@ -274,16 +274,17 @@ fun AppMainScreen(
                 ) {
                     val (robotRef, voicePanelRef, aiBubbleRef, serviceCardsRef, activeCardRef) = createRefs()
 
-                    // 1. 机器人角色 (居中偏上)
+                    // 1. 机器人角色 (居中)
                     Box(
                         modifier = Modifier
                             .constrainAs(robotRef) {
                                 top.linkTo(parent.top)
-                                bottom.linkTo(parent.bottom, margin = 200.dp)
+                                bottom.linkTo(voicePanelRef.top)
                                 start.linkTo(parent.start)
                                 end.linkTo(parent.end)
                                 horizontalBias = robotHorizontalBias
-                                verticalBias = 0.35f // 继续上移，给下方腾出逻辑空间
+                                verticalBias = 0.5f
+                                height = Dimension.fillToConstraints
                             },
                         contentAlignment = Alignment.Center
                     ) {
@@ -292,7 +293,8 @@ fun AppMainScreen(
                             characterType = characterType,
                             roleName = activeRole?.roleName,
                             audioLevel = { audioLevel }, // 传入音频等级用于微表情
-                            headSize = 400.dp // 420 -> 400 稍微缩小一点点
+                            headSize = 400.dp, // 保持原大小
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
                     // 2. 语音输入面板 (下移 15%，增大底部间距)

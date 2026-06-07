@@ -18,11 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.airobot.airbot.character.CharacterType
-import com.airobot.airbot.character.RiveCharacter
-import com.airobot.airbot.character.RiveCharacterConfigManager
 import com.airobot.airbot.state.RobotVisualState
-import androidx.compose.ui.draw.clipToBounds
 import com.airobot.framework.theme.RobotAntennaStemDark
 import com.airobot.framework.theme.RobotAntennaStemLight
 import com.airobot.framework.theme.RobotBlush
@@ -33,83 +29,19 @@ import com.airobot.framework.theme.RobotHeadBorder
 import com.airobot.framework.theme.RobotHeadColor
 import com.airobot.framework.theme.RobotNeckColor
 import com.airobot.framework.theme.RobotTheme
-import com.airobot.framework.theme.RobotDimensions
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
-
 /**
- * 机器人角色主组件 - 支持多引擎切换调度
+ * 机器人角色主组件 - 增强版 (原生 Canvas 动画)
+ * 默认形象：Aether
  */
 @Composable
-fun RobotCharacter(
+fun AetherCharacter(
     state: RobotVisualState,
-    characterType: CharacterType = CharacterType.ANDROID_CANVAS,
-    roleName: String? = null,
     ttsProgressNormalized: Float = 0f,
     audioLevel: () -> Float = { 0f },
     headSize: Dp = 320.dp,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .width(headSize * RobotDimensions.CharacterWidthRatio)
-            .height(headSize * RobotDimensions.CharacterHeightRatio),
-        contentAlignment = Alignment.Center
-    ) {
-        when (characterType) {
-            CharacterType.ANDROID_CANVAS -> {
-                CanvasRobotCharacter(
-                    state = state,
-                    ttsProgressNormalized = ttsProgressNormalized,
-                    audioLevel = audioLevel,
-                    headSize = headSize,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            CharacterType.RIVE_IP -> {
-                val context = androidx.compose.ui.platform.LocalContext.current
-                val config = RiveCharacterConfigManager.getCharacterConfig(context, roleName)
-                val density = androidx.compose.ui.platform.LocalDensity.current
-                val translationX = with(density) { config.offsetX.dp.toPx() }
-                val translationY = with(density) { config.offsetY.dp.toPx() }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clipToBounds(), // Ensure character stays within the container boundaries
-                    contentAlignment = Alignment.Center
-                ) {
-                    RiveCharacter(
-                        state = state,
-                        roleName = roleName,
-                        audioLevel = audioLevel,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .graphicsLayer {
-                                scaleX = config.scale
-                                scaleY = config.scale
-                                this.translationX = translationX
-                                this.translationY = translationY
-                            }
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * 机器人角色主组件 - 增强版 (原生 Canvas 动画)
- *
- * 对应原型: IPCharacter.tsx
- */
-@Composable
-private fun CanvasRobotCharacter(
-    state: RobotVisualState,
-    ttsProgressNormalized: Float = 0f,
-    audioLevel: () -> Float = { 0f }, // 传入音频等级 (Lambda)
-    headSize: Dp = 320.dp, // 增大默认尺寸以匹配 420px 比例
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "robotAnimation")
@@ -213,8 +145,6 @@ private fun CanvasRobotCharacter(
                 .offset(y = if (state == RobotVisualState.IDLE) floatOffset.dp else 0.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 状态提示气泡已移除，迁移到功能卡片组件
-
             // 机器人头部
             RobotHead(
                 state = state,
@@ -561,8 +491,6 @@ private fun StaticMouth(
             .background(Color(0xFF334155).copy(alpha = 0.8f)) // 深灰色横线
     )
 }
-
-// StatusTipBubble已删除，迁移到功能卡片组件
 
 /**
  * 眨眼时的眼睛形状
