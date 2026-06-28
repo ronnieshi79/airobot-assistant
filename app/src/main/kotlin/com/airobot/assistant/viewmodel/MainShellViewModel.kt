@@ -1,4 +1,4 @@
-package com.airobot.assistant.viewmodel
+﻿package com.airobot.assistant.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -15,10 +15,11 @@ import com.airobot.core.system.model.SystemInfo
 import com.airobot.core.comm.NetCommService
 import com.airobot.core.comm.NetworkState
 import com.airobot.core.comm.NetCommEvent
-import com.airobot.airbot.state.RobotEngineState
-import com.airobot.airbot.state.RobotStateEngine
-import com.airobot.audio.AudioEvent
-import com.airobot.audio.AudioService
+import com.airobot.airbot.domain.model.RobotState
+import com.airobot.airbot.api.AirbotEngineApi
+import com.airobot.airbot.api.AirbotCharacterApi
+import com.airobot.agent.AudioEvent
+import com.airobot.agent.AudioService
 
 /**
  * 主外壳控制 ViewModel
@@ -27,12 +28,13 @@ import com.airobot.audio.AudioService
 @HiltViewModel
 class MainShellViewModel @Inject constructor(
     private val netCommService: NetCommService,
-    private val robotStateEngine: RobotStateEngine,
+    private val airbotEngineApi: AirbotEngineApi,
+    private val airbotCharacterApi: AirbotCharacterApi,
     private val sysManage: SysManage,
     private val audioService: AudioService
 ) : ViewModel() {
 
-    val robotState: StateFlow<RobotEngineState> = robotStateEngine.robotEngineState
+    val robotState: StateFlow<RobotState> = airbotEngineApi.robotState
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
     private val _showActivationDialog = MutableStateFlow(false)
@@ -70,7 +72,7 @@ class MainShellViewModel @Inject constructor(
             audioService.events.collect { event ->
                 when (event) {
                     is AudioEvent.Wakeup -> {
-                        val currentState = robotStateEngine.robotEngineState.value
+                        val currentState = airbotEngineApi.robotState.value
                         Log.d("MainShellViewModel",
                             "Wakeup detected. Current state: $currentState")
 
@@ -78,7 +80,7 @@ class MainShellViewModel @Inject constructor(
                         val isNetworkReady = netCommService.isConnected
                         val isSystemReady = sysManage.state.value is SysState.Ready
                         if (isNetworkReady && isSystemReady &&
-                            (currentState is RobotEngineState.Ready || currentState is RobotEngineState.Conversation)) {
+                            (currentState is RobotState.Ready || currentState is RobotState.Conversation)) {
                             Log.d("MainShellViewModel", "Conditions met. Proceeding with wakeup.")
                             viewModelScope.launch {
                                 _wakeupEvent.emit(Unit)
@@ -106,19 +108,19 @@ class MainShellViewModel @Inject constructor(
             sysManage.state.collect { state ->
                 when (state) {
                     is SysState.Checking -> {
-                        robotStateEngine.updateEngineState(RobotEngineState.Initializing)
+                        airbotEngineApi.updateEngineState(RobotState.Initializing)
                     }
                     is SysState.DeviceActivationRequired -> {
-                        robotStateEngine.updateEngineState(
-                            RobotEngineState.Unauthorized("DEVICE_ACTIVATION"))
+                        airbotEngineApi.updateEngineState(
+                            RobotState.Unauthorized("DEVICE_ACTIVATION"))
                         _showActivationDialog.value = false
                     }
                     is SysState.AiRobotActivationRequired -> {
                         val code = state.code
                         _activationCode.value = code
                         _showActivationDialog.value = true
-                        robotStateEngine.updateEngineState(
-                            RobotEngineState.Unauthorized(code))
+                        airbotEngineApi.updateEngineState(
+                            RobotState.Unauthorized(code))
                     }
                     is SysState.Ready -> {
                         _showActivationDialog.value = false
@@ -129,14 +131,14 @@ class MainShellViewModel @Inject constructor(
                         // 外部在需要时，由 UI 触发或是 ConversationViewModel 层对 MainViewModel 的 UI Event 处理。
                     }
                     is SysState.UpdateAvailable -> {
-                        // TODO: 处理软件更新
-                        robotStateEngine.updateEngineState(RobotEngineState.Ready)
+                        // TODO: 处理可更新状态
+                        airbotEngineApi.updateEngineState(RobotState.Ready)
                         // Also try to connect if update is available, assuming it functions
                         netCommService.connect()
                     }
                     is SysState.Error -> {
                         _errorMessage.value = state.message
-                        robotStateEngine.updateEngineState(RobotEngineState.Offline)
+                        airbotEngineApi.updateEngineState(RobotState.Offline)
                     }
                     is SysState.Idle -> {}
                 }
@@ -150,7 +152,7 @@ class MainShellViewModel @Inject constructor(
             netCommService.state.collect { state ->
                 when (state) {
                     NetworkState.CONNECTING, NetworkState.RECONNECTING -> {
-                        robotStateEngine.updateEngineState(RobotEngineState.Connecting)
+                        airbotEngineApi.updateEngineState(RobotState.Connecting)
                     }
                     NetworkState.CONNECTED -> {
                         // 用 handleAiRobotEvent(NetCommEvent.Connected) 处理
@@ -159,10 +161,10 @@ class MainShellViewModel @Inject constructor(
                         Log.w("MainShellViewModel", "Network state is $state. Deactivating Audio Service.")
                         audioService.deactivate() // 确保网络断开时停止录音传输
 
-                        // 排除初始化和未认证的状态，其余视为 Offline
-                        if (robotStateEngine.robotEngineState.value !is RobotEngineState.Unauthorized &&
-                            robotStateEngine.robotEngineState.value !is RobotEngineState.Initializing) {
-                            robotStateEngine.updateEngineState(RobotEngineState.Offline)
+                        // 排除初始化和未授权状态，重置为 Offline
+                        if (airbotEngineApi.robotState.value !is RobotState.Unauthorized &&
+                            airbotEngineApi.robotState.value !is RobotState.Initializing) {
+                            airbotEngineApi.updateEngineState(RobotState.Offline)
                         }
                     }
                 }
@@ -180,17 +182,17 @@ class MainShellViewModel @Inject constructor(
     private fun handleAiRobotEvent(event: NetCommEvent) {
         when (event) {
             is NetCommEvent.Connected -> {
-                // 连接成功且不处于会话中，则标记为 Ready (可接受唤醒)
-                if (robotStateEngine.robotEngineState.value !is RobotEngineState.Conversation) {
+                // 连接成功也可能在会话中，此时不应重置为 Ready（由服务端接管会话状态）
+                if (airbotEngineApi.robotState.value !is RobotState.Conversation) {
                     Log.d("MainShellViewModel", "Safe transitioning to Ready due to Connected event")
-                    robotStateEngine.updateEngineState(RobotEngineState.Ready)
+                    airbotEngineApi.updateEngineState(RobotState.Ready)
                 }
                 _errorMessage.value = null
             }
             is NetCommEvent.Disconnected -> {
                 Log.w("MainShellViewModel", "Received Disconnected event. Deactivating Audio Service.")
                 audioService.deactivate()
-                robotStateEngine.updateEngineState(RobotEngineState.Offline)
+                airbotEngineApi.updateEngineState(RobotState.Offline)
             }
             is NetCommEvent.Error -> {
                 Log.e("MainShellViewModel", "Received Error event: ${event.message}. Deactivating Audio Service.")
@@ -224,18 +226,16 @@ class MainShellViewModel @Inject constructor(
         }
     }
 
-    fun updateActiveRole(index: Int) {
+    fun updateActiveRole(roleName: String) {
         viewModelScope.launch {
-            val currentInfo = sysManage.systemInfo.value
-            if (index in 0 until currentInfo.aiRobotArray.size && currentInfo.aiRobotArray[index] != null) {
-                val updatedInfo = currentInfo.copy(activeRoleIndex = index)
-                sysManage.updateSystemInfo(updatedInfo)
-            }
+            airbotCharacterApi.switchCharacter(roleName)
         }
     }
 
     // System Info Exposure (Reactive)
     val systemInfo: StateFlow<SystemInfo> = sysManage.systemInfo
+    val allCharacters = airbotCharacterApi.allCharacters
+    val activeCharacter = airbotCharacterApi.activeCharacter
 
     // Device Info Exposure (derived from hierarchical agentVendor)
     val deviceInfo = systemInfo.map { it.deviceInfo }

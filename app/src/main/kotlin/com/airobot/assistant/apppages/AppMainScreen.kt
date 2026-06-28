@@ -1,4 +1,5 @@
-package com.airobot.assistant.apppages
+﻿package com.airobot.assistant.apppages
+import com.airobot.airbot.domain.model.AirbotServiceSubState
 
 import android.Manifest
 import androidx.compose.animation.core.*
@@ -9,6 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
+import com.airobot.airbot.viewmodel.InteractionType
+import com.airobot.framework.layout.BottomFooter
+import com.airobot.airbot.domain.model.CharacterType
+import com.airobot.assistant.ui.comp.services.ServiceSubState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
@@ -23,31 +28,27 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import com.airobot.framework.theme.RobotTheme
 import com.airobot.framework.theme.RobotThemeMode
-import com.airobot.framework.comp.BackgroundDecorations
-import com.airobot.framework.comp.BottomFooter
+import com.airobot.assistant.ui.comp.BackgroundDecorations
 import com.airobot.assistant.settings.AiRobotDialog
-import com.airobot.airbot.dialogue.DialogueBubble
-import com.airobot.airbot.interaction.RobotVoiceInputPanel
-import com.airobot.framework.statusbar.RobotTopBar
-import com.airobot.framework.drawer.SystemDrawer
-import com.airobot.framework.drawer.DrawerMenuItemData
+import com.airobot.assistant.ui.comp.DialogueBubble
+import com.airobot.assistant.ui.comp.RobotVoiceInputPanel
+import com.airobot.framework.layout.RobotTopBar
+import com.airobot.framework.layout.SystemDrawer
+import com.airobot.framework.layout.DrawerMenuItemData
 import com.airobot.assistant.settings.AiRobotConfig
 import com.airobot.assistant.settings.RoleConfig
 import com.airobot.assistant.settings.SystemAuth
-import com.airobot.services.compoments.DEFAULT_SERVICE_CARDS
-import com.airobot.services.compoments.ServiceCardCarousel
-import com.airobot.services.compoments.ServiceDetailPanel
-import com.airobot.airbot.state.ConversationSubState
-import com.airobot.airbot.state.InteractionType
-import com.airobot.airbot.state.RobotEngineState
-import com.airobot.airbot.state.RobotUiState
-import com.airobot.airbot.state.RobotVisualState
-import com.airobot.services.state.ServiceSubState
+import com.airobot.assistant.ui.comp.services.DEFAULT_SERVICE_CARDS
+import com.airobot.assistant.ui.comp.services.ServiceCardCarousel
+import com.airobot.assistant.ui.comp.services.ServiceDetailPanel
+import com.airobot.airbot.domain.model.ConversationSubState
+import com.airobot.airbot.domain.model.RobotState
+import com.airobot.airbot.viewmodel.RobotUiState
+import com.airobot.airbot.viewmodel.RobotVisualState
 import com.airobot.assistant.viewmodel.MainShellViewModel
 import com.airobot.airbot.viewmodel.ConversationViewModel
-import com.airobot.services.ServiceViewModel
+import com.airobot.assistant.viewmodel.ServiceViewModel
 import com.airobot.airbot.character.RobotCharacter
-import com.airobot.airbot.character.CharacterType
 import com.airobot.framework.theme.StatusAmber
 import com.airobot.framework.theme.StatusCyan
 import com.airobot.framework.theme.StatusEmerald
@@ -81,8 +82,9 @@ fun AppMainScreen(
     val activationCode by mainShellViewModel.activationCode.collectAsState()
     val mainVoiceLevel by mainShellViewModel.voiceLevel.collectAsState()
     val systemInfo by mainShellViewModel.systemInfo.collectAsState()
-    val activeRole = systemInfo.aiRobotArray.getOrNull(systemInfo.activeRoleIndex)
-    val characterType = CharacterType.fromString(activeRole?.characterType ?: "ANDROID_CANVAS")
+    val allCharacters by mainShellViewModel.allCharacters.collectAsState()
+    val activeCharacter by mainShellViewModel.activeCharacter.collectAsState()
+    val characterType = CharacterType.fromString(activeCharacter?.characterType ?: "ANDROID_CANVAS")
 
     // 从 ConversationViewModel 收集交互状态
     val convAudioLevel by conversationViewModel.audioLevel.collectAsState()
@@ -90,7 +92,7 @@ fun AppMainScreen(
     val currentRoundAiText by conversationViewModel.currentRoundAiText.collectAsState()
 
     // 组合音量等级：对话时用对话VM的，非对话时用主VM的
-    val audioLevel = if (robotState is RobotEngineState.Conversation) convAudioLevel else mainVoiceLevel
+    val audioLevel = if (robotState is RobotState.Conversation) convAudioLevel else mainVoiceLevel
 
     // 从 ServiceViewModel 收集功能状态
     val activeCard by serviceViewModel.activeCard.collectAsState()
@@ -130,33 +132,30 @@ fun AppMainScreen(
         currentCard // currentCard 随 currentCardIndex 变化
     ) {
         val visualState = when (val s = robotState) {
-            is RobotEngineState.Offline -> RobotVisualState.SLEEPING
-            is RobotEngineState.Initializing -> RobotVisualState.THINKING
-            is RobotEngineState.Connecting -> RobotVisualState.THINKING
-            is RobotEngineState.Unauthorized -> RobotVisualState.IDLE
-            is RobotEngineState.Ready -> RobotVisualState.IDLE
-            is RobotEngineState.Conversation -> when (s.subState) {
+            is RobotState.Offline -> RobotVisualState.SLEEPING
+            is RobotState.Initializing -> RobotVisualState.THINKING
+            is RobotState.Connecting -> RobotVisualState.THINKING
+            is RobotState.Unauthorized -> RobotVisualState.IDLE
+            is RobotState.Ready -> RobotVisualState.IDLE
+            is RobotState.Conversation -> when (s.subState) {
                 ConversationSubState.LISTENING -> RobotVisualState.LISTENING
                 ConversationSubState.THINKING -> RobotVisualState.THINKING
                 ConversationSubState.SPEAKING -> RobotVisualState.SPEAKING
             }
-            is RobotEngineState.FunctionService -> when (s.subState) {
-                ServiceSubState.IDLE -> RobotVisualState.IDLE
-                ServiceSubState.RUNNING -> RobotVisualState.FOCUS
-                ServiceSubState.PAUSED -> RobotVisualState.IDLE
-                ServiceSubState.COMPLETED -> RobotVisualState.HAPPY
-                ServiceSubState.CANCELLED -> RobotVisualState.IDLE
+            is RobotState.FunctionService -> when (s.subState) {
+                AirbotServiceSubState.IDLE -> RobotVisualState.IDLE
+                AirbotServiceSubState.RUNNING -> RobotVisualState.FOCUS
+                AirbotServiceSubState.PAUSED -> RobotVisualState.IDLE
+                AirbotServiceSubState.COMPLETED -> RobotVisualState.HAPPY
+                AirbotServiceSubState.CANCELLED -> RobotVisualState.IDLE
             }
         }
 
         robotUiState = robotUiState.copy(
             visualState = visualState,
-            isConnected = robotState !is RobotEngineState.Offline,
+            isConnected = robotState !is RobotState.Offline,
             currentUserMsg = currentRoundUserText,
             currentAiMsg = currentRoundAiText,
-            activeCard = activeCard,
-            activeServiceData = activeServiceData,
-            serviceSubState = serviceSubState,
             interactionType = if (activeCard != null) InteractionType.CARD else InteractionType.CHAT,
             statusTip = currentCard.statusTip
         )
@@ -199,8 +198,9 @@ fun AppMainScreen(
         DrawerMenuItemData(Icons.Default.Lock, "系统认证", "系统认证信息") { SystemAuth() },
         DrawerMenuItemData(Icons.Default.Person, "角色管理", "角色管理") {
             RoleConfig(
-                systemInfo = systemInfo,
-                onRoleSelected = { index -> mainShellViewModel.updateActiveRole(index) }
+                characters = allCharacters,
+                activeCharacter = activeCharacter,
+                onRoleSelected = { roleName -> mainShellViewModel.updateActiveRole(roleName) }
             )
         },
         DrawerMenuItemData(Icons.Default.Settings, "Ai智能体", "Ai智能体配置") { AiRobotConfig() }
@@ -238,21 +238,21 @@ fun AppMainScreen(
                     // 为了防止状态栏遮挡，顶部留出一定空间
             ) {
                 val stateText = when (robotState) {
-                    is RobotEngineState.Offline -> "OFFLINE"
-                    is RobotEngineState.Initializing -> "INITIALIZING"
-                    is RobotEngineState.Unauthorized -> "UNAUTHORIZED"
-                    is RobotEngineState.Connecting -> "CONNECTING"
-                    is RobotEngineState.Ready -> "READY"
-                    is RobotEngineState.Conversation -> "CONVERSATION"
-                    is RobotEngineState.FunctionService -> "SERVICE MODE"
+                    is RobotState.Offline -> "OFFLINE"
+                    is RobotState.Initializing -> "INITIALIZING"
+                    is RobotState.Unauthorized -> "UNAUTHORIZED"
+                    is RobotState.Connecting -> "CONNECTING"
+                    is RobotState.Ready -> "READY"
+                    is RobotState.Conversation -> "CONVERSATION"
+                    is RobotState.FunctionService -> "SERVICE MODE"
                 }
 
                 val stateColor = when (robotState) {
-                    is RobotEngineState.Offline -> StatusRed
-                    is RobotEngineState.Initializing -> StatusAmber
-                    is RobotEngineState.Unauthorized -> StatusRed
-                    is RobotEngineState.Connecting -> StatusCyan
-                    is RobotEngineState.Ready -> StatusCyan
+                    is RobotState.Offline -> StatusRed
+                    is RobotState.Initializing -> StatusAmber
+                    is RobotState.Unauthorized -> StatusRed
+                    is RobotState.Connecting -> StatusCyan
+                    is RobotState.Ready -> StatusCyan
                     else -> StatusEmerald
                 }
 
@@ -261,7 +261,7 @@ fun AppMainScreen(
                     stateColor = stateColor,
                     errorMessage = errorMessage,
                     onLogoClick = { scope.launch { drawerState.open() } },
-                    robotName = activeRole?.roleName ?: "AETHER"
+                    roleName = activeCharacter?.roleName ?: "AETHER"
                 )
 
                 // ErrorBanner 迁移到 TopBar 中，此处移除
@@ -288,11 +288,12 @@ fun AppMainScreen(
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        if (activeRole != null) {
+                        val currentCharacter = activeCharacter
+                        if (currentCharacter != null) {
                             RobotCharacter(
                                 state = robotUiState.visualState,
                                 characterType = characterType,
-                                roleName = activeRole.roleName,
+                                roleName = currentCharacter.roleName,
                                 audioLevel = { audioLevel }, // 传入音频等级用于微表情
                                 headSize = 400.dp // 保持原大小
                             )
@@ -310,7 +311,7 @@ fun AppMainScreen(
                         RobotVoiceInputPanel(
                             robotState = robotUiState.visualState,
                             isConnected = robotUiState.isConnected,
-                            serviceSubState = robotUiState.serviceSubState,
+                            serviceSubState = serviceSubState,
                             userMessage = currentRoundUserText,
                             audioLevel = audioLevel,
                             onStartListening = {
@@ -361,9 +362,7 @@ fun AppMainScreen(
                                     visualState = RobotVisualState.IDLE,
                                     currentUserMsg = null,
                                     currentAiMsg = null,
-                                    serviceSubState = ServiceSubState.IDLE,
-                                    activeServiceData = null,
-                                    activeCard = null
+                                    
                                 )
                                 conversationViewModel.interrupt()
                             }
@@ -393,7 +392,7 @@ fun AppMainScreen(
 
                                     robotUiState = robotUiState.copy(
                                         interactionType = InteractionType.CARD,
-                                        activeCard = targetCard,
+                                        
                                         visualState = RobotVisualState.LISTENING,
                                         currentUserMsg = null,
                                         currentAiMsg = null
@@ -419,25 +418,17 @@ fun AppMainScreen(
                                 .width(600.dp) // 更宽的卡片
                         ) {
                             ServiceDetailPanel(
-                                card = robotUiState.activeCard,
-                                activeServiceData = robotUiState.activeServiceData,
-                                serviceSubState = robotUiState.serviceSubState,
+                                card = activeCard,
+                                activeServiceData = activeServiceData,
+                                serviceSubState = serviceSubState,
                                 onTimerComplete = {
                                     robotUiState = robotUiState.copy(
-                                        serviceSubState = ServiceSubState.IDLE,
-                                        visualState = RobotVisualState.IDLE,
-                                        activeServiceData = null,
-                                        activeCard = null,
-                                        interactionType = InteractionType.CHAT
+                                        visualState = RobotVisualState.IDLE
                                     )
                                 },
                                 onClose = {
                                     robotUiState = robotUiState.copy(
-                                        visualState = RobotVisualState.IDLE,
-                                        interactionType = InteractionType.CHAT,
-                                        activeCard = null,
-                                        serviceSubState = ServiceSubState.IDLE,
-                                        activeServiceData = null
+                                        visualState = RobotVisualState.IDLE
                                     )
                                     serviceViewModel.closeService()
                                     conversationViewModel.interrupt()
