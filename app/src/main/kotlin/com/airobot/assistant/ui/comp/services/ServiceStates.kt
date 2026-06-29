@@ -1,4 +1,4 @@
-﻿package com.airobot.assistant.ui.comp.services
+package com.airobot.assistant.ui.comp.services
 
 /**
  * 服务卡片子状态
@@ -15,29 +15,15 @@ enum class ServiceSubState {
  * 服务卡片类型
  */
 enum class ServiceCardType {
-    TIMER,      // 专注时钟
-    STORY,      // 故事时间
-    CHAT,       // 随心聊天
-    GAME,       // 益智游戏
-    DRAW,       // 涂鸦创作
-    QUIZ,       // 趣味问答
-    ALARM,      // 闹钟
-    WEATHER,    // 天气
-    MUSIC       // 音乐
+    PODCAST,        // AI播客播放器
+    PODCAST_DIY,    // AI播客DIY新节目
+    NOTEPAD         // AI记事本
 }
 
 /**
  * 服务卡片具体数据接口
  */
 sealed interface ServiceCardData
-
-/**
- * 专注时钟数据
- */
-data class TimerCardData(
-    val duration: Int,  // 时长（秒）
-    val task: String    // 任务名称
-) : ServiceCardData
 
 /**
  * 服务卡片数据

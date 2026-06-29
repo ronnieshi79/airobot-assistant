@@ -1,10 +1,9 @@
-﻿package com.airobot.assistant.viewmodel
+package com.airobot.assistant.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.airobot.assistant.ui.comp.services.ServiceCard
 import com.airobot.assistant.ui.comp.services.ServiceCardData
 import com.airobot.assistant.ui.comp.services.ServiceSubState
-import com.airobot.assistant.ui.comp.services.TimerCardData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -55,13 +54,5 @@ class ServiceViewModel @Inject constructor() : ViewModel() {
                 closeService()
             }
         }
-    }
-
-    /**
-     * 模拟启动计时器
-     */
-    fun startTimer(task: String, duration: Int) {
-        _activeServiceData.value = TimerCardData(duration, task)
-        _serviceSubState.value = ServiceSubState.RUNNING
     }
 }

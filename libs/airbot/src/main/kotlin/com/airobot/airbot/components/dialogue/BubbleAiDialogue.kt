@@ -60,7 +60,7 @@ import com.airobot.airbot.R as AirbotR
  * AI对话气泡组件 - 增强设计版，单独的ai对话气泡
  */
 @Composable
-internal fun BubbleAiDialogue(
+fun BubbleAiDialogue(
     robotState: RobotVisualState,
     aiMsg: String?,
     onAiSpeechComplete: () -> Unit,

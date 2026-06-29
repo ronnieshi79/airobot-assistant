@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.airobot.assistant.assembly.AppMainScreen
 import com.airobot.framework.theme.AiRobotTheme
 import com.airobot.framework.theme.RobotTheme
 import com.airobot.framework.theme.RobotThemeMode

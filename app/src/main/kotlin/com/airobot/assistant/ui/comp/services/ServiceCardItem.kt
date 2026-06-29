@@ -1,4 +1,4 @@
-﻿package com.airobot.assistant.ui.comp.services
+package com.airobot.assistant.ui.comp.services
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -203,77 +203,42 @@ private fun CardProgressBar(
  */
 fun getServiceCardIcon(type: ServiceCardType): Int {
     return when (type) {
-        ServiceCardType.TIMER -> R.drawable.timer
-        ServiceCardType.STORY -> R.drawable.book
-        ServiceCardType.CHAT -> R.drawable.chat
-        ServiceCardType.GAME -> R.drawable.game
-        ServiceCardType.DRAW -> R.drawable.palette
-        ServiceCardType.QUIZ -> R.drawable.star
-        ServiceCardType.ALARM -> R.drawable.alarm
-        ServiceCardType.WEATHER -> R.drawable.cloud_on
-        ServiceCardType.MUSIC -> R.drawable.music
+        ServiceCardType.PODCAST -> R.drawable.music
+        ServiceCardType.PODCAST_DIY -> R.drawable.palette
+        ServiceCardType.NOTEPAD -> R.drawable.book
     }
 }
 
 /**
  * 预定义的服务卡片池
  */
-private const val DEMO_CONTENT = "ai服务卡片需要小智ai / coze 等Agent平台支持，并配套MCP服务；\n\n 或联系社区获取商业版 AiRobot-Assistant支持"
-
 val DEFAULT_SERVICE_CARDS = listOf(
     ServiceCard(
-        id = "card-timer",
-        type = ServiceCardType.TIMER,
-        title = "专注时钟",
-        content = "番茄工作法助手",
-        statusTip = "该专注一会了",
-        iconResId = R.drawable.timer,
-        demoContent = DEMO_CONTENT
+        id = "card-podcast",
+        type = ServiceCardType.PODCAST,
+        title = "AI播客",
+        content = "你的专属智能播客",
+        statusTip = "听点有意思的",
+        iconResId = R.drawable.music,
+        demoContent = "AI播客需要后端支持"
     ),
     ServiceCard(
-        id = "card-story",
-        type = ServiceCardType.STORY,
-        title = "故事时间",
-        content = "一起探索比特森林的奥秘",
-        statusTip = "想听个故事吗？",
-        iconResId = R.drawable.book,
-        demoContent = DEMO_CONTENT
-    ),
-    ServiceCard(
-        id = "card-chat",
-        type = ServiceCardType.CHAT,
-        title = "随心聊天",
-        content = "今天过得怎么样？",
-        statusTip = "找我聊聊天吧",
-        iconResId = R.drawable.chat,
-        demoContent = DEMO_CONTENT
-    ),
-    ServiceCard(
-        id = "card-game",
-        type = ServiceCardType.GAME,
-        title = "益智小游戏",
-        content = "寻找隐藏的星星",
-        statusTip = "来玩个游戏？",
-        iconResId = R.drawable.game,
-        demoContent = DEMO_CONTENT
-    ),
-    ServiceCard(
-        id = "card-draw",
-        type = ServiceCardType.DRAW,
-        title = "涂鸦创作",
-        content = "画一架太空飞船",
-        statusTip = "我们来画画吧",
+        id = "card-podcast-diy",
+        type = ServiceCardType.PODCAST_DIY,
+        title = "播客DIY",
+        content = "创作你的播客节目",
+        statusTip = "来点灵感",
         iconResId = R.drawable.palette,
-        demoContent = DEMO_CONTENT
+        demoContent = "DIY功能需要后端支持"
     ),
     ServiceCard(
-        id = "card-quiz",
-        type = ServiceCardType.QUIZ,
-        title = "趣味问答",
-        content = "空间知识大挑战",
-        statusTip = "考考你的知识",
-        iconResId = R.drawable.star,
-        demoContent = DEMO_CONTENT
+        id = "card-notepad",
+        type = ServiceCardType.NOTEPAD,
+        title = "AI记事本",
+        content = "智能记录灵感",
+        statusTip = "记下你的想法",
+        iconResId = R.drawable.book,
+        demoContent = "记事本功能需要后端支持"
     )
 )
 

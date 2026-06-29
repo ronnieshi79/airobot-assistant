@@ -44,7 +44,7 @@ import com.airobot.airbot.R as AirbotR
  * 机器人语音交互面板 - 极致通透动态感应版 (响应式比例版)
  */
 @Composable
-internal fun VoiceInputPanel(
+fun VoiceInputPanel(
     robotState: RobotVisualState,
     isConnected: Boolean,
     isTimerActive: Boolean = false,

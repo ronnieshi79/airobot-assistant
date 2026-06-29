@@ -1,4 +1,4 @@
-﻿package com.airobot.assistant
+package com.airobot.assistant.assembly
 import com.airobot.airbot.domain.model.AirbotServiceSubState
 
 import android.Manifest
@@ -29,8 +29,6 @@ import com.airobot.framework.theme.RobotTheme
 import com.airobot.framework.theme.RobotThemeMode
 import com.airobot.assistant.ui.comp.BackgroundDecorations
 import com.airobot.assistant.settings.AiRobotDialog
-import com.airobot.assistant.ui.comp.DialogueBubble
-import com.airobot.assistant.ui.comp.RobotVoiceInputPanel
 import com.airobot.framework.layout.RobotTopBar
 import com.airobot.framework.layout.SystemDrawer
 import com.airobot.framework.layout.DrawerMenuItemData
@@ -38,8 +36,6 @@ import com.airobot.assistant.settings.AiRobotConfig
 import com.airobot.assistant.settings.RoleConfig
 import com.airobot.assistant.settings.SystemAuth
 import com.airobot.assistant.ui.comp.services.DEFAULT_SERVICE_CARDS
-import com.airobot.assistant.ui.comp.services.ServiceCardCarousel
-import com.airobot.assistant.ui.comp.services.ServiceDetailPanel
 import com.airobot.airbot.domain.model.ConversationSubState
 import com.airobot.airbot.domain.model.RobotState
 import com.airobot.airbot.viewmodel.RobotUiState
@@ -47,11 +43,11 @@ import com.airobot.airbot.viewmodel.RobotVisualState
 import com.airobot.assistant.viewmodel.MainShellViewModel
 import com.airobot.airbot.viewmodel.ConversationViewModel
 import com.airobot.assistant.viewmodel.ServiceViewModel
-import com.airobot.airbot.character.RobotCharacter
 import com.airobot.framework.theme.StatusAmber
 import com.airobot.framework.theme.StatusCyan
 import com.airobot.framework.theme.StatusEmerald
 import com.airobot.framework.theme.StatusRed
+import com.airobot.assistant.ui.comp.services.ServiceSubState
 
 /**
  * 机器人服务主屏幕
@@ -271,169 +267,108 @@ fun AppMainScreen(
                         .fillMaxSize()
                         .weight(1f)
                 ) {
-                    val (robotRef, voicePanelRef, aiBubbleRef, serviceCardsRef, activeCardRef) = createRefs()
+                    val (airobotRef, featureScreensRef) = createRefs()
 
-                    // 1. 机器人角色 (居中)
+                    // 1. Airobot 组件组合
+                    AirobotScreen(
+                        robotHorizontalBias = robotHorizontalBias,
+                        robotVisualState = robotUiState.visualState,
+                        characterType = characterType,
+                        roleName = activeCharacter?.roleName ?: "AETHER",
+                        audioLevel = audioLevel,
+                        isConnected = robotUiState.isConnected,
+                        isTimerActive = serviceSubState == ServiceSubState.RUNNING || serviceSubState == ServiceSubState.PAUSED,
+                        isTimerPaused = serviceSubState == ServiceSubState.PAUSED,
+                        currentRoundAiText = currentRoundAiText,
+                        onStartListening = {
+                            if (permissionsState.allPermissionsGranted) {
+                                robotUiState = robotUiState.copy(
+                                    interactionType = InteractionType.CHAT,
+                                    currentUserMsg = null,
+                                    currentAiMsg = null
+                                )
+                                conversationViewModel.startConversation()
+                            }
+                        },
+                        onStopListening = { conversationViewModel.stopAutoConversation() },
+                        onInterruptSpeak = { conversationViewModel.interrupt() },
+                        onTimerControl = { action -> serviceViewModel.handleTimerAction(action) },
+                        onCommandClick = { command ->
+                            if (permissionsState.allPermissionsGranted) {
+                                robotUiState = robotUiState.copy(
+                                    interactionType = InteractionType.CHAT,
+                                    currentUserMsg = command,
+                                    currentAiMsg = null
+                                )
+                                conversationViewModel.startConversation()
+                            }
+                        },
+                        onBubbleClose = {
+                            robotUiState = robotUiState.copy(
+                                visualState = RobotVisualState.IDLE,
+                                currentUserMsg = null,
+                                currentAiMsg = null
+                            )
+                            conversationViewModel.interrupt()
+                        },
+                        modifier = Modifier.constrainAs(airobotRef) {
+                            top.linkTo(parent.top)
+                            bottom.linkTo(parent.bottom)
+                            start.linkTo(parent.start)
+                            end.linkTo(parent.end)
+                            width = Dimension.fillToConstraints
+                            height = Dimension.fillToConstraints
+                        }
+                    )
+
+                    // 2. 右侧卡片区域
                     Box(
                         modifier = Modifier
-                            .constrainAs(robotRef) {
+                            .constrainAs(featureScreensRef) {
+                                if (robotUiState.isCardMode) {
+                                    end.linkTo(parent.end, margin = 48.dp)
+                                    width = Dimension.value(600.dp)
+                                } else {
+                                    end.linkTo(parent.end, margin = 64.dp)
+                                    width = Dimension.value(260.dp)
+                                }
                                 top.linkTo(parent.top)
-                                bottom.linkTo(voicePanelRef.top)
-                                start.linkTo(parent.start)
-                                end.linkTo(parent.end)
-                                horizontalBias = robotHorizontalBias
-                                verticalBias = 0.5f
+                                bottom.linkTo(parent.bottom)
                                 height = Dimension.fillToConstraints
                             },
-                        contentAlignment = Alignment.Center
+                        contentAlignment = if (robotUiState.isCardMode) Alignment.Center else Alignment.CenterEnd
                     ) {
-                        val currentCharacter = activeCharacter
-                        if (currentCharacter != null) {
-                            RobotCharacter(
-                                state = robotUiState.visualState,
-                                characterType = characterType,
-                                roleName = currentCharacter.roleName,
-                                audioLevel = { audioLevel }, // 传入音频等级用于微表情
-                                headSize = 400.dp // 保持原大小
-                            )
-                        }
-                    }
-                    // 2. 语音输入面板 (下移 15%，增大底部间距)
-                    Box(
-                        modifier = Modifier
-                            .constrainAs(voicePanelRef) {
-                                bottom.linkTo(parent.bottom, margin = 40.dp) // 80 -> 40 显著下移
-                                start.linkTo(robotRef.start)
-                                end.linkTo(robotRef.end)
-                            }
-                    ) {
-                        RobotVoiceInputPanel(
-                            robotState = robotUiState.visualState,
-                            isConnected = robotUiState.isConnected,
-                            serviceSubState = serviceSubState,
-                            userMessage = currentRoundUserText,
-                            audioLevel = audioLevel,
-                            onStartListening = {
-                                if (permissionsState.allPermissionsGranted) {
-                                    robotUiState = robotUiState.copy(
-                                        interactionType = InteractionType.CHAT,
-                                        currentUserMsg = null,
-                                        currentAiMsg = null
-                                    )
-                                    conversationViewModel.startConversation()
-                                }
-                            },
-                            onStopListening = {
-                                conversationViewModel.stopAutoConversation()
-                            },
-                            onTimerControl = { action ->
-                                serviceViewModel.handleTimerAction(action)
-                            },
-                            onCommandClick = { command ->
-                                if (permissionsState.allPermissionsGranted) {
-                                    robotUiState = robotUiState.copy(
-                                        interactionType = InteractionType.CHAT,
-                                        currentUserMsg = command,
-                                        currentAiMsg = null
-                                    )
-                                    conversationViewModel.startConversation()
-                                }
-                            }
-                        )
-                    }
-
-                    // 3. AI 对话气泡 (机器人右上方)
-                    Box(
-                        modifier = Modifier
-                            .constrainAs(aiBubbleRef) {
-                                start.linkTo(robotRef.end, margin = (-180).dp) // 稍微重叠一点看起来像从机器人发出
-                                top.linkTo(robotRef.top, margin = 180.dp)
-                            }
-                    ) {
-                        DialogueBubble(
-                            robotState = robotUiState.visualState,
-                            aiMsg = currentRoundAiText,
-                            onAiSpeechComplete = {
-                                // 语音播报完成
-                            },
-                            onClose = {
+                        FeatureScreens(
+                            isCardMode = robotUiState.isCardMode,
+                            serviceCards = serviceCards,
+                            currentCardIndex = currentCardIndex,
+                            onPageChanged = { currentCardIndex = it },
+                            statusTip = robotUiState.statusTip,
+                            activeCard = activeCard,
+                            onCardClick = { card ->
+                                val targetCard = if (serviceCards.contains(card)) card else serviceCards[currentCardIndex]
                                 robotUiState = robotUiState.copy(
-                                    visualState = RobotVisualState.IDLE,
+                                    interactionType = InteractionType.CARD,
+                                    visualState = RobotVisualState.LISTENING,
                                     currentUserMsg = null,
-                                    currentAiMsg = null,
-
+                                    currentAiMsg = null
                                 )
+                                serviceViewModel.startService(targetCard)
+                                if (permissionsState.allPermissionsGranted) {
+                                    conversationViewModel.startConversation()
+                                }
+                            },
+                            onCloseOverlay = {
+                                robotUiState = robotUiState.copy(
+                                    visualState = RobotVisualState.IDLE
+                                )
+                                serviceViewModel.closeService()
                                 conversationViewModel.interrupt()
+                            },
+                            onWakeupAirobot = {
+                                conversationViewModel.startConversation()
                             }
                         )
-                    }
-
-                    // 4. 右侧功能推荐卡片 (非交互/卡片模式时显示)
-                    if (!robotUiState.isInteracting) {
-                        Box(
-                            modifier = Modifier
-                                .constrainAs(serviceCardsRef) {
-                                    end.linkTo(parent.end, margin = 64.dp)
-                                    top.linkTo(parent.top)
-                                    bottom.linkTo(parent.bottom)
-                                }
-                                .width(260.dp),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            ServiceCardCarousel(
-                                cards = serviceCards,
-                                currentIndex = currentCardIndex,
-                                onPageChanged = { currentCardIndex = it },
-                                statusTip = robotUiState.statusTip, // 传递状态提示到卡片区域
-                                onCardClick = { card ->
-                                    // 确保点击的是当前显示的卡片
-                                    val targetCard = if (serviceCards.contains(card)) card else serviceCards[currentCardIndex]
-
-                                    robotUiState = robotUiState.copy(
-                                        interactionType = InteractionType.CARD,
-
-                                        visualState = RobotVisualState.LISTENING,
-                                        currentUserMsg = null,
-                                        currentAiMsg = null
-                                    )
-                                    serviceViewModel.startService(targetCard)
-                                    if (permissionsState.allPermissionsGranted) {
-                                        conversationViewModel.startConversation()
-                                    }
-                                }
-                            )
-                        }
-                    }
-
-                    // 5. 功能卡片详情 (交互/卡片模式时显示)
-                    if (robotUiState.isCardMode) {
-                        Box(
-                            modifier = Modifier
-                                .constrainAs(activeCardRef) {
-                                    end.linkTo(parent.end, margin = 48.dp)
-                                    top.linkTo(parent.top)
-                                    bottom.linkTo(parent.bottom)
-                                }
-                                .width(600.dp) // 更宽的卡片
-                        ) {
-                            ServiceDetailPanel(
-                                card = activeCard,
-                                activeServiceData = activeServiceData,
-                                serviceSubState = serviceSubState,
-                                onTimerComplete = {
-                                    robotUiState = robotUiState.copy(
-                                        visualState = RobotVisualState.IDLE
-                                    )
-                                },
-                                onClose = {
-                                    robotUiState = robotUiState.copy(
-                                        visualState = RobotVisualState.IDLE
-                                    )
-                                    serviceViewModel.closeService()
-                                    conversationViewModel.interrupt()
-                                }
-                            )
-                        }
                     }
                 }
             }
@@ -456,4 +391,3 @@ fun AppMainScreen(
         }
     }
 }
-
