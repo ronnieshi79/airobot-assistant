@@ -1,4 +1,4 @@
-﻿package com.airobot.assistant.apppages
+﻿package com.airobot.assistant
 import com.airobot.airbot.domain.model.AirbotServiceSubState
 
 import android.Manifest
@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import com.airobot.airbot.viewmodel.InteractionType
 import com.airobot.framework.layout.BottomFooter
 import com.airobot.airbot.domain.model.CharacterType
-import com.airobot.assistant.ui.comp.services.ServiceSubState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
@@ -362,7 +361,7 @@ fun AppMainScreen(
                                     visualState = RobotVisualState.IDLE,
                                     currentUserMsg = null,
                                     currentAiMsg = null,
-                                    
+
                                 )
                                 conversationViewModel.interrupt()
                             }
@@ -392,7 +391,7 @@ fun AppMainScreen(
 
                                     robotUiState = robotUiState.copy(
                                         interactionType = InteractionType.CARD,
-                                        
+
                                         visualState = RobotVisualState.LISTENING,
                                         currentUserMsg = null,
                                         currentAiMsg = null

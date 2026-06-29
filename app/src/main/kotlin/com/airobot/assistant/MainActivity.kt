@@ -17,7 +17,6 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.airobot.framework.theme.AiRobotTheme
 import com.airobot.framework.theme.RobotTheme
 import com.airobot.framework.theme.RobotThemeMode
-import com.airobot.assistant.apppages.AppMainScreen
 
 import dagger.hilt.android.AndroidEntryPoint
 

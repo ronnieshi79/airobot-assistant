@@ -140,7 +140,7 @@ dependencies {
     implementation(project(":features"))
     implementation(project(":core"))
     implementation(project(":airbot"))
-    implementation(files("../libs/agent/libs/sherpa-onnx-1.12.28.aar"))
+    implementation(files("../libs/agent/libs/sherpa-onnx-1.13.2.aar"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
