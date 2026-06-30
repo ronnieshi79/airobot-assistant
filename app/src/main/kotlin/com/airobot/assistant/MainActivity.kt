@@ -22,7 +22,9 @@ import com.airobot.framework.theme.RobotThemeMode
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import com.airobot.framework.util.LanguageMode
-import com.airobot.features.FeaturesInitializer
+import com.airobot.features.FeaturesModule
+
+import com.airobot.assistant.assembly.APP_SUPPORTED_OVERLAYS
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -31,13 +33,13 @@ class MainActivity : ComponentActivity() {
     }
 
     @Inject
-    lateinit var featuresInitializer: FeaturesInitializer
+    lateinit var featuresModule: FeaturesModule
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Initialize background features
-        featuresInitializer.initialize()
+
+        // Initialize background features with custom configuration
+        featuresModule.initialize(APP_SUPPORTED_OVERLAYS)
 
         // 设置全屏模式 - 沉浸式系统栏设计
         WindowCompat.setDecorFitsSystemWindows(window, false)

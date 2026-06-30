@@ -219,4 +219,16 @@
     <string name="card_notepad_title">AI记事本</string>
     <string name="card_notepad_content">智能记录灵感</string>
     <string name="card_notepad_tip">记下你的想法</string>
+    <string name="card_alarm_title">AI闹钟</string>
+    <string name="card_alarm_content">智能闹钟与日程提醒</string>
+    <string name="card_alarm_tip">按时唤醒与提醒</string>
+    <string name="card_timer_title">AI计时器</string>
+    <string name="card_timer_content">便捷倒计时与声音提醒</string>
+    <string name="card_timer_tip">合理规划短暂时间</string>
+    <string name="card_focus_title_rec">AI专注空间</string>
+    <string name="card_focus_content_rec">番茄钟与物理白噪音</string>
+    <string name="card_focus_tip_rec">专注高效的每一刻</string>
+    <string name="card_schedule_title">AI日程规划</string>
+    <string name="card_schedule_content">查看日程安排与任务清单</string>
+    <string name="card_schedule_tip">让生活更有条理</string>
 </resources>

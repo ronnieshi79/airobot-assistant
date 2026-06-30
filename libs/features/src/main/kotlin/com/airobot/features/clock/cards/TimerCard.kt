@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.airobot.features.R
-import com.airobot.features.aiserv.guidance.AetherTipBanner
+import com.airobot.features.aiserv.guidance.components.AetherTipBanner
 import com.airobot.features.clock.cards.timer.TimerPresetItem
 import com.airobot.features.clock.cards.widgets.AiListContainer
 import com.airobot.features.clock.data.model.PresetItem

@@ -40,8 +40,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.airobot.features.aiserv.guidance.AetherRemindBanner
-import com.airobot.features.aiserv.guidance.RemindPage
+import com.airobot.features.aiserv.guidance.components.AetherRemindBanner
+import com.airobot.features.aiserv.guidance.components.RemindPage
 import com.airobot.features.schedule.data.ScheduleUtils
 import com.airobot.features.schedule.viewmodel.ScheduleViewModel
 // Removed SubCategory import

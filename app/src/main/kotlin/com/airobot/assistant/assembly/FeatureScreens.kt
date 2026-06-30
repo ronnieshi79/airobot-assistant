@@ -2,7 +2,7 @@ package com.airobot.assistant.assembly
 
 import androidx.compose.runtime.Composable
 import com.airobot.features.aiserv.guidance.components.ServiceCardCarousel
-import com.airobot.features.aiserv.guidance.models.RecommendedCard
+import com.airobot.features.aiserv.guidance.data.RecommendedCard
 import com.airobot.features.aiserv.popup.OverlayTags
 import com.airobot.features.aiserv.routes.AiNotepadOverlayRoute
 import com.airobot.features.podcast.routes.PodcastOverlayRoute

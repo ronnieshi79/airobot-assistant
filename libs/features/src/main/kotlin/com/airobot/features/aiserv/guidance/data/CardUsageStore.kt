@@ -1,4 +1,4 @@
-package com.airobot.features.aiserv.guidance
+package com.airobot.features.aiserv.guidance.data
 
 import android.content.Context
 import android.content.SharedPreferences

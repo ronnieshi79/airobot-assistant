@@ -29,8 +29,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.airobot.features.R
-import com.airobot.features.aiserv.guidance.AetherRemindBanner
-import com.airobot.features.aiserv.guidance.RemindPage
+import com.airobot.features.aiserv.guidance.components.AetherRemindBanner
+import com.airobot.features.aiserv.guidance.components.RemindPage
 import com.airobot.features.aiserv.popup.PopupServiceItem
 import com.airobot.features.clock.cards.home.SkeuomorphicClockFace
 import com.airobot.framework.cards.ModuleServiceCard

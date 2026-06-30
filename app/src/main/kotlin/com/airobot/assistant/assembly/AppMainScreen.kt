@@ -104,7 +104,7 @@ fun AppMainScreen(
     var currentCardIndex by remember { mutableIntStateOf(0) }
 
     // 服务卡片定义 (由 Hilt Singleton 注入的 RecommendationEngine 计算出的动态列表)
-    val serviceCards by overlayViewModel.getRecommendedCards(APP_SUPPORTED_OVERLAYS).collectAsState(initial = emptyList())
+    val serviceCards by overlayViewModel.getRecommendedCards().collectAsState(initial = emptyList())
     val currentCard = serviceCards.getOrNull(currentCardIndex) ?: serviceCards.firstOrNull()
     val currentStatusTip = currentCard?.let { stringResource(id = it.statusTipResId) } ?: ""
 

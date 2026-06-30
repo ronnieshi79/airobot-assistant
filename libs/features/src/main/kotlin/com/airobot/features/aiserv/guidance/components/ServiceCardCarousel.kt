@@ -12,7 +12,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.airobot.features.aiserv.guidance.models.RecommendedCard
+import com.airobot.features.aiserv.guidance.data.RecommendedCard
 import com.airobot.framework.theme.RobotTheme
 
 /**

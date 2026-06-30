@@ -39,8 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.airobot.features.R
-import com.airobot.features.aiserv.guidance.AetherRemindBanner
-import com.airobot.features.aiserv.guidance.RemindPage
+import com.airobot.features.aiserv.guidance.components.AetherRemindBanner
+import com.airobot.features.aiserv.guidance.components.RemindPage
 import com.airobot.features.podcast.cards.home.NowPlayingWidget
 import com.airobot.features.podcast.cards.home.PodcastHomeEpisodeListItem
 import com.airobot.features.podcast.cards.home.PodcastStudioMic

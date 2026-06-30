@@ -1,9 +1,11 @@
 package com.airobot.features.aiserv.guidance
 
-import com.airobot.features.aiserv.guidance.models.RecommendedCard
+import com.airobot.features.aiserv.guidance.data.CardUsageRecord
+import com.airobot.features.aiserv.guidance.data.CardUsageStore
+import com.airobot.features.aiserv.guidance.data.RecommendedCard
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -12,11 +14,16 @@ class RecommendationEngine @Inject constructor(
     private val cardRegistry: CardRegistry,
     private val usageStore: CardUsageStore
 ) {
+    private val _supportedTags = MutableStateFlow<List<String>>(emptyList())
     private val _updateTrigger = MutableStateFlow(0)
 
-    fun getRecommendedCards(supportedTags: List<String>): Flow<List<RecommendedCard>> = _updateTrigger.map {
-        val records = usageStore.getAllRecords(supportedTags)
-        val cards = cardRegistry.getCards(supportedTags)
+    fun setSupportedTags(tags: List<String>) {
+        _supportedTags.value = tags
+    }
+
+    fun getRecommendedCards(): Flow<List<RecommendedCard>> = combine(_supportedTags, _updateTrigger) { tags, _ ->
+        val records = usageStore.getAllRecords(tags)
+        val cards = cardRegistry.getCards(tags)
 
         // Calculate median usage
         val usageCounts = records.values.map { it.usageCount }.sorted()

@@ -6,7 +6,7 @@ import com.airobot.features.aiserv.popup.OverlayCoordinator
 import com.airobot.features.aiserv.popup.TopAlertCoordinator
 import com.airobot.features.aiserv.popup.TopAlertState
 import com.airobot.features.aiserv.guidance.RecommendationEngine
-import com.airobot.features.aiserv.guidance.models.RecommendedCard
+import com.airobot.features.aiserv.guidance.data.RecommendedCard
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,8 +36,8 @@ class OverlayViewModel @Inject constructor(
         overlayCoordinator.hideOverlay()
     }
 
-    fun getRecommendedCards(supportedTags: List<String>): Flow<List<RecommendedCard>> {
-        return recommendationEngine.getRecommendedCards(supportedTags)
+    fun getRecommendedCards(): Flow<List<RecommendedCard>> {
+        return recommendationEngine.getRecommendedCards()
     }
 
     /**

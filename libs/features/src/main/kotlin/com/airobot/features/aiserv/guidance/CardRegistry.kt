@@ -1,6 +1,6 @@
 package com.airobot.features.aiserv.guidance
 
-import com.airobot.features.aiserv.guidance.models.RecommendedCard
+import com.airobot.features.aiserv.guidance.data.RecommendedCard
 import javax.inject.Inject
 import javax.inject.Singleton
 

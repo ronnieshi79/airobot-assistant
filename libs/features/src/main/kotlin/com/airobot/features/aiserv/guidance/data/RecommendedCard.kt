@@ -1,4 +1,4 @@
-package com.airobot.features.aiserv.guidance.models
+package com.airobot.features.aiserv.guidance.data
 
 /**
  * RecommendedCard — Data model for feature overlay recommendations

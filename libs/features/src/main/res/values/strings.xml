@@ -219,4 +219,16 @@
     <string name="card_notepad_title">AI Notepad</string>
     <string name="card_notepad_content">Smartly capture your ideas</string>
     <string name="card_notepad_tip">Write down your thoughts</string>
+    <string name="card_alarm_title">AI Alarm</string>
+    <string name="card_alarm_content">Smart alarm and wake-up notifications</string>
+    <string name="card_alarm_tip">Wake up on time</string>
+    <string name="card_timer_title">AI Timer</string>
+    <string name="card_timer_content">Convenient countdowns and alerts</string>
+    <string name="card_timer_tip">Keep track of time</string>
+    <string name="card_focus_title_rec">AI Focus</string>
+    <string name="card_focus_content_rec">Tomato timer and white noise</string>
+    <string name="card_focus_tip_rec">Focus on every moment</string>
+    <string name="card_schedule_title">AI Schedule</string>
+    <string name="card_schedule_content">Manage your tasks and calendar</string>
+    <string name="card_schedule_tip">Organize your day</string>
 </resources>
