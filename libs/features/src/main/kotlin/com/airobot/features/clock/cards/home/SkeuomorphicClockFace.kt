@@ -11,14 +11,10 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Psychology
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -29,11 +25,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.airobot.features.aiserv.popup.PopupQueueWidgetItem
+import com.airobot.features.aiserv.popup.PopupServiceItem
 import com.airobot.framework.theme.ClockCenterPin
 import com.airobot.framework.theme.ClockHandHour
 import com.airobot.framework.theme.ClockHandMinute
@@ -45,13 +40,6 @@ import java.util.Calendar
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
-
-import com.airobot.features.state.PopupServiceItem
-import com.airobot.features.state.PopupServiceType
-import com.airobot.features.state.TimerMode
-import com.airobot.framework.cards.PopupQueueWidgetItem
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 /**
  * Skeuomorphic Clock Face — analog clock with sub-dial widget.
@@ -96,9 +84,10 @@ fun SkeuomorphicClockFace(
     // Resolve mapped items for sub-dial
     val subDialItems = queueItems.map { item ->
         val isActive = when (item.serviceType) {
-            PopupServiceType.ALARM -> item.priority >= 60
-            PopupServiceType.TIMER, PopupServiceType.FOCUS -> true
-            PopupServiceType.CHIME -> item.priority >= 90
+            "ALARM" -> item.priority >= 60
+            "TIMER", "FOCUS" -> true
+            "CHIME" -> item.priority >= 90
+            else -> false
         }
         PopupQueueWidgetItem(
             id = item.id,

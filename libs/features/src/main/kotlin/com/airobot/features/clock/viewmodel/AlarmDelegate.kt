@@ -4,31 +4,29 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.util.Log
-import androidx.core.content.ContextCompat
-import com.airobot.features.aiserv.event.AiEvent
-import com.airobot.features.aiserv.event.AiEventDispatcher
-import com.airobot.features.clock.data.ClockRepository
-import com.airobot.features.clock.service.AlarmRingingService
-import com.airobot.features.clock.service.AlarmScheduler
-import com.airobot.features.clock.service.SoundPlayer
-import com.airobot.features.clock.data.model.AlarmItem
-import com.airobot.features.state.PopupQueueService
-import com.airobot.features.state.PopupServiceItem
-import com.airobot.features.state.PopupServiceType
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Notifications
-import com.airobot.features.clock.cards.AlarmOverlay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.core.content.ContextCompat
+import com.airobot.features.aiserv.event.AiEvent
+import com.airobot.features.aiserv.event.AiEventDispatcher
+import com.airobot.features.aiserv.popup.OverlayTags
+import com.airobot.features.aiserv.popup.PopupQueueService
+import com.airobot.features.aiserv.popup.PopupServiceItem
+import com.airobot.features.clock.cards.AlarmOverlay
+import com.airobot.features.clock.data.ClockRepository
+import com.airobot.features.clock.data.model.AlarmItem
+import com.airobot.features.clock.service.AlarmRingingService
+import com.airobot.features.clock.service.AlarmScheduler
+import com.airobot.features.clock.service.SoundPlayer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -79,6 +77,7 @@ class AlarmDelegate @Inject constructor(
                     Log.d(TAG, "Alarm triggered broadcast received for ID: $id")
                     onAlarmTriggered(id)
                 }
+
                 AlarmRingingService.ACTION_ALARM_SEQUENCE_DONE -> {
                     val id = intent.getStringExtra("alarmId") ?: ""
                     Log.d(TAG, "Alarm ringing sequence complete broadcast received for ID: $id")
@@ -177,7 +176,8 @@ class AlarmDelegate @Inject constructor(
             }
             _alarms.value = finalAlarms
             clockRepository.saveAlarms(finalAlarms)
-            _selectedAlarmId.value = _alarms.value.firstOrNull { it.enabled }?.id ?: _alarms.value.firstOrNull()?.id
+            _selectedAlarmId.value =
+                _alarms.value.firstOrNull { it.enabled }?.id ?: _alarms.value.firstOrNull()?.id
 
             // Schedule enabled alarms on start
             _alarms.value.forEach { alarm ->
@@ -212,7 +212,11 @@ class AlarmDelegate @Inject constructor(
         )
 
         coroutineScope.launch {
-            combine(_alarms, _ringingAlarmId, _isAlarmBackgrounded) { alarmList, ringingId, isBackgrounded ->
+            combine(
+                _alarms,
+                _ringingAlarmId,
+                _isAlarmBackgrounded
+            ) { alarmList, ringingId, isBackgrounded ->
                 alarmList.mapNotNull { alarm ->
                     val isRingingThis = (alarm.id == ringingId)
                     if (alarm.enabled || isRingingThis) {
@@ -224,7 +228,10 @@ class AlarmDelegate @Inject constructor(
                                 System.currentTimeMillis() - 1000
                             }
                         } else {
-                            com.airobot.features.clock.service.AlarmSchedulerImpl.calculateNextTriggerTime(alarm.time, alarm.days)
+                            com.airobot.features.clock.service.AlarmSchedulerImpl.calculateNextTriggerTime(
+                                alarm.time,
+                                alarm.days
+                            )
                         }
                         AlarmServiceData(
                             alarmId = alarm.id,
@@ -261,17 +268,17 @@ class AlarmDelegate @Inject constructor(
         val data: AlarmServiceData
     ) : PopupServiceItem() {
         override val id: String = "alarm_${data.alarmId}"
-        override val serviceType: PopupServiceType = PopupServiceType.ALARM
+        override val serviceType: String = OverlayTags.ALARM
         override val displayName: String = data.label.take(4)
-        
+
         override val priority: Int = if (data.isForeground) {
-            100 
+            100
         } else if (data.isRinging) {
-            60 
+            60
         } else {
             10
         }
-        
+
         override val timeoutDurationMs: Long = 0L // Managed by AlarmRingingService
         override val nextEventTimeMs: Long? = data.nextEventTimeMs
         override val needsForegroundLock: Boolean = data.isForeground
@@ -279,20 +286,21 @@ class AlarmDelegate @Inject constructor(
 
         override val subDialTitle: String
             get() = if (data.isRinging) "闹铃响铃" else "闹钟"
-            
+
         override val subDialValue: String
             get() {
                 val timeFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
                 return timeFormat.format(java.util.Date(data.nextEventTimeMs))
             }
-            
-        override val subDialIcon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Outlined.Notifications
-        
+
+        override val subDialIcon: androidx.compose.ui.graphics.vector.ImageVector =
+            Icons.Outlined.Notifications
+
         @Composable
         override fun getSubDialColor(): androidx.compose.ui.graphics.Color {
             return com.airobot.framework.theme.RobotTheme.colors.alarmAccent
         }
-        
+
         override val subDialOnClick: () -> Unit = {}
 
         override val onDismiss: () -> Unit = {
@@ -413,7 +421,7 @@ class AlarmDelegate @Inject constructor(
                 val updated = _pendingAlarms.value + it
                 _pendingAlarms.value = updated
             }
-            
+
             // Still dispatch event to notifier
             aiEventDispatcher.dispatch(
                 AiEvent.AlarmTriggered(
@@ -509,7 +517,7 @@ class AlarmDelegate @Inject constructor(
 
     private fun clearRingingState(alarmId: String) {
         Log.d(TAG, "clearRingingState called for alarmId=$alarmId")
-        // User clarification: When alarm rings and ends (auto-silence) without user interaction, 
+        // User clarification: When alarm rings and ends (auto-silence) without user interaction,
         // it actively releases lock (foreground) and goes to background, waiting for next wakeup.
         // We do not set ringingId to null yet, because it's technically still active in its snooze cycle.
         // We just minimize it.

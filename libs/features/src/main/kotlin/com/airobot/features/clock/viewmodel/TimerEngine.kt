@@ -2,22 +2,6 @@ package com.airobot.features.clock.viewmodel
 
 import android.content.Context
 import android.util.Log
-import com.airobot.features.aiserv.event.AiEvent
-import com.airobot.features.aiserv.event.AiEventDispatcher
-import com.airobot.features.clock.data.ClockRepository
-import com.airobot.features.clock.service.SoundPlayer
-import com.airobot.features.clock.data.model.PresetItem
-import com.airobot.features.state.TimerMode
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import com.airobot.features.clock.data.model.AlarmItem
-import com.airobot.features.state.PopupQueueService
-import com.airobot.features.state.PopupServiceItem
-import com.airobot.features.state.PopupServiceType
-import com.airobot.features.clock.cards.TimerOverlay
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material.icons.outlined.Psychology
@@ -25,7 +9,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.airobot.features.state.OverlayViewModel
+import com.airobot.features.aiserv.event.AiEvent
+import com.airobot.features.aiserv.event.AiEventDispatcher
+import com.airobot.features.aiserv.popup.OverlayTags
+import com.airobot.features.aiserv.popup.TopAlertCoordinator
+import com.airobot.features.clock.data.model.toAiCategory
+import com.airobot.features.aiserv.popup.PopupQueueService
+import com.airobot.features.aiserv.popup.PopupServiceItem
+import com.airobot.features.clock.cards.TimerOverlay
+import com.airobot.features.clock.data.ClockRepository
+import com.airobot.features.clock.data.model.AlarmItem
+import com.airobot.features.clock.data.model.PresetItem
+import com.airobot.features.clock.data.model.TimerMode
+import com.airobot.features.clock.service.SoundPlayer
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -72,7 +73,8 @@ class TimerEngine @Inject constructor(
     private val clockRepository: ClockRepository,
     private val soundPlayer: SoundPlayer,
     private val aiEventDispatcher: AiEventDispatcher,
-    private val popupQueueService: PopupQueueService
+    private val popupQueueService: PopupQueueService,
+    private val topAlertCoordinator: TopAlertCoordinator
 ) {
     companion object {
         private const val TAG = "TimerEngine"
@@ -125,9 +127,33 @@ class TimerEngine @Inject constructor(
         coroutineScope.launch {
             val loadedTimerPresets = clockRepository.loadTimerPresets()
             val defaults = listOf(
-                PresetItem("1", context.getString(com.airobot.features.R.string.timer_preset_ramen), 180, 0, "", true, TimerMode.COUNTDOWN),
-                PresetItem("2", context.getString(com.airobot.features.R.string.timer_preset_mask), 900, 0, "", true, TimerMode.COUNTDOWN),
-                PresetItem("4", context.getString(com.airobot.features.R.string.timer_preset_meditation), 1800, 0, "meditation.mp3", true, TimerMode.FOCUS)
+                PresetItem(
+                    "1",
+                    context.getString(com.airobot.features.R.string.timer_preset_ramen),
+                    180,
+                    0,
+                    "",
+                    true,
+                    TimerMode.COUNTDOWN
+                ),
+                PresetItem(
+                    "2",
+                    context.getString(com.airobot.features.R.string.timer_preset_mask),
+                    900,
+                    0,
+                    "",
+                    true,
+                    TimerMode.COUNTDOWN
+                ),
+                PresetItem(
+                    "4",
+                    context.getString(com.airobot.features.R.string.timer_preset_meditation),
+                    1800,
+                    0,
+                    "meditation.mp3",
+                    true,
+                    TimerMode.FOCUS
+                )
             )
             if (loadedTimerPresets.size < 3) {
                 val merged = defaults.map { def ->
@@ -171,8 +197,9 @@ class TimerEngine @Inject constructor(
                 instance.timerSeconds,
                 _foregroundInstanceId
             ) { isRunning, isBackgrounded, timerSeconds, foregroundId ->
-                val isForeground = (isRunning || timerSeconds == 0) && !isBackgrounded && (foregroundId == instance.id)
-                
+                val isForeground =
+                    (isRunning || timerSeconds == 0) && !isBackgrounded && (foregroundId == instance.id)
+
                 // Sync to global flows if this is the foreground instance
                 if (foregroundId == instance.id) {
                     _timerSeconds.value = timerSeconds
@@ -182,15 +209,16 @@ class TimerEngine @Inject constructor(
                     _activeTimerMode.value = instance.mode
                     _isTimerBackgrounded.value = isBackgrounded
                 }
-                
-                val timeoutMs = if (isRunning || (instance.mode == TimerMode.FOCUS && timerSeconds > 0)) {
-                    0L
-                } else if (timerSeconds == 0) {
-                    if (instance.mode == TimerMode.FOCUS) 10000L else 15000L // Align with completion alert sound duration
-                } else {
-                    instance.totalSeconds * 1000L // Original duration is pause timeout
-                }
-                
+
+                val timeoutMs =
+                    if (isRunning || (instance.mode == TimerMode.FOCUS && timerSeconds > 0)) {
+                        0L
+                    } else if (timerSeconds == 0) {
+                        if (instance.mode == TimerMode.FOCUS) 10000L else 15000L // Align with completion alert sound duration
+                    } else {
+                        instance.totalSeconds * 1000L // Original duration is pause timeout
+                    }
+
                 TimerServiceData(
                     id = instance.id,
                     label = instance.preset.label,
@@ -211,7 +239,8 @@ class TimerEngine @Inject constructor(
         val data: TimerServiceData
     ) : PopupServiceItem() {
         override val id: String = "timer_${data.id}"
-        override val serviceType: PopupServiceType = if (data.isFocusMode) PopupServiceType.FOCUS else PopupServiceType.TIMER
+        override val serviceType: String =
+            if (data.isFocusMode) OverlayTags.FOCUS else OverlayTags.TIMER
         override val displayName: String = data.label.take(4)
         override val priority: Int = if (data.isForeground) 80 else 50
         override val timeoutDurationMs: Long = data.timeoutDurationMs
@@ -228,12 +257,12 @@ class TimerEngine @Inject constructor(
             }
         override val subDialIcon: androidx.compose.ui.graphics.vector.ImageVector
             get() = if (data.needsForegroundLock) Icons.Outlined.Psychology else Icons.Outlined.HourglassEmpty
-        
+
         @Composable
         override fun getSubDialColor(): androidx.compose.ui.graphics.Color {
             return if (data.needsForegroundLock) com.airobot.framework.theme.RobotTheme.colors.focusAccent else com.airobot.framework.theme.RobotTheme.colors.timerAccent
         }
-        
+
         override val subDialOnClick: () -> Unit = {
             bringTimerToForeground(instance.id)
         }
@@ -257,7 +286,7 @@ class TimerEngine @Inject constructor(
                         label = instance.preset.label,
                         duration = instance.totalSeconds - instance.timerSeconds.value,
                         targetDuration = instance.totalSeconds,
-                        mode = instance.mode,
+                        category = instance.mode.toAiCategory(),
                         timestamp = System.currentTimeMillis(),
                         closeReason = "pause_timeout",
                         startTime = instance.sessionStartTime,
@@ -273,8 +302,8 @@ class TimerEngine @Inject constructor(
             val timerSeconds by instance.timerSeconds.collectAsState()
             val totalSeconds = instance.totalSeconds
             val isRunning by instance.isRunning.collectAsState()
-            val pendingAlarms by (pendingAlarmsFlow ?: MutableStateFlow(emptyList())).collectAsState()
-            val overlayViewModel: OverlayViewModel = hiltViewModel()
+            val pendingAlarms by (pendingAlarmsFlow
+                ?: MutableStateFlow(emptyList())).collectAsState()
 
             TimerOverlay(
                 timerSeconds = timerSeconds,
@@ -293,7 +322,7 @@ class TimerEngine @Inject constructor(
                     onClearPendingAlarms?.invoke()
                 },
                 onClearPendingAlarms = { onClearPendingAlarms?.invoke() },
-                onShowConstraintAlert = { overlayViewModel.showTopAlert(it) },
+                onShowConstraintAlert = { topAlertCoordinator.showAlert(it) },
                 onClose = {
                     onClearPendingAlarms?.invoke()
                 }
@@ -316,7 +345,7 @@ class TimerEngine @Inject constructor(
         }
         _timerPresets.value = updated
         coroutineScope.launch { clockRepository.saveTimerPresets(updated) }
-        
+
         val activeInst = _activeInstances.value[id]
         if (activeInst != null && !activeInst.isRunning.value) {
             activeInst.timerSeconds.value = updatedItem.seconds
@@ -326,7 +355,11 @@ class TimerEngine @Inject constructor(
     /**
      * Starts a countdown session.
      */
-    fun startTimerSession(preset: PresetItem, autoStart: Boolean, coroutineScope: CoroutineScope): TimerStartResult {
+    fun startTimerSession(
+        preset: PresetItem,
+        autoStart: Boolean,
+        coroutineScope: CoroutineScope
+    ): TimerStartResult {
         if (_activeInstances.value.containsKey(preset.id)) {
             Log.w(TAG, "Cannot start timer session: Preset ${preset.id} is already active.")
             return TimerStartResult.DUPLICATE_PRESET
@@ -343,8 +376,11 @@ class TimerEngine @Inject constructor(
             return TimerStartResult.COUNTDOWN_BLOCKS_FOCUS
         }
 
-        Log.d(TAG, "startTimerSession: preset=${preset.label}, mode=${preset.mode}, autoStart=$autoStart")
-        
+        Log.d(
+            TAG,
+            "startTimerSession: preset=${preset.label}, mode=${preset.mode}, autoStart=$autoStart"
+        )
+
         val instance = TimerInstance(
             id = preset.id,
             preset = preset,
@@ -383,13 +419,13 @@ class TimerEngine @Inject constructor(
         if (instance.sessionStartTime == 0L) {
             instance.sessionStartTime = System.currentTimeMillis()
             instance.remindersCount = 0
-            
+
             aiEventDispatcher.dispatch(
                 AiEvent.TimerStarted(
                     id = java.util.UUID.randomUUID().toString(),
                     label = instance.preset.label,
                     duration = instance.totalSeconds,
-                    mode = instance.mode,
+                    category = instance.mode.toAiCategory(),
                     timestamp = instance.sessionStartTime
                 )
             )
@@ -403,15 +439,18 @@ class TimerEngine @Inject constructor(
                 delay(1000)
                 if (instance.isRunning.value) {
                     instance.timerSeconds.value -= 1
-                    
+
                     if (reminderInterval > 0) {
                         val elapsed = lastReminderSeconds - instance.timerSeconds.value
                         if (elapsed >= reminderInterval) {
-                            Log.d(TAG, "Timer checkpoint reached: elapsed=$elapsed seconds - playing beep")
+                            Log.d(
+                                TAG,
+                                "Timer checkpoint reached: elapsed=$elapsed seconds - playing beep"
+                            )
                             bringTimerToForeground(instance.id)
                             soundPlayer.playReminderSound()
                             lastReminderSeconds = instance.timerSeconds.value
-                            
+
                             instance.remindersCount++
                             aiEventDispatcher.dispatch(
                                 AiEvent.TimerReminderTriggered(
@@ -419,7 +458,7 @@ class TimerEngine @Inject constructor(
                                     label = instance.preset.label,
                                     elapsedSeconds = instance.totalSeconds - instance.timerSeconds.value,
                                     totalSeconds = instance.totalSeconds,
-                                    mode = instance.mode,
+                                    category = instance.mode.toAiCategory(),
                                     timestamp = System.currentTimeMillis()
                                 )
                             )
@@ -427,7 +466,7 @@ class TimerEngine @Inject constructor(
                     }
                 }
             }
-            
+
             instance.isRunning.value = false
             updateFocusLockedState()
             Log.d(TAG, "Timer countdown completed successfully")
@@ -440,7 +479,7 @@ class TimerEngine @Inject constructor(
                     label = instance.preset.label,
                     duration = instance.totalSeconds,
                     targetDuration = instance.totalSeconds,
-                    mode = instance.mode,
+                    category = instance.mode.toAiCategory(),
                     timestamp = System.currentTimeMillis(),
                     closeReason = "completed",
                     startTime = instance.sessionStartTime,
@@ -458,7 +497,7 @@ class TimerEngine @Inject constructor(
         val instance = _activeInstances.value[id] ?: return
         val nextRunning = !instance.isRunning.value
         Log.d(TAG, "toggleTimerRunning: id=$id, nextRunning=$nextRunning")
-        
+
         if (instance.mode == TimerMode.FOCUS && instance.isRunning.value) {
             Log.w(TAG, "Cannot toggle running state: Focus mode is locked and cannot be paused")
             return
@@ -491,7 +530,7 @@ class TimerEngine @Inject constructor(
                     label = instance.preset.label,
                     duration = actualSpent,
                     targetDuration = instance.totalSeconds,
-                    mode = TimerMode.COUNTDOWN,
+                    category = TimerMode.COUNTDOWN.toAiCategory(),
                     timestamp = System.currentTimeMillis(),
                     closeReason = "user_interrupted",
                     startTime = instance.sessionStartTime,
@@ -506,7 +545,7 @@ class TimerEngine @Inject constructor(
     fun emergencyStopTimer(id: String) {
         Log.d(TAG, "emergencyStopTimer: id=$id")
         val instance = _activeInstances.value[id] ?: return
-        
+
         val actualSpent = instance.totalSeconds - instance.timerSeconds.value
         if (instance.mode == TimerMode.FOCUS && actualSpent > 0) {
             aiEventDispatcher.dispatch(
@@ -515,7 +554,7 @@ class TimerEngine @Inject constructor(
                     label = instance.preset.label,
                     duration = actualSpent,
                     targetDuration = instance.totalSeconds,
-                    mode = TimerMode.FOCUS,
+                    category = TimerMode.FOCUS.toAiCategory(),
                     timestamp = System.currentTimeMillis(),
                     closeReason = "emergency_stopped",
                     startTime = instance.sessionStartTime,
@@ -555,20 +594,20 @@ class TimerEngine @Inject constructor(
             instance.timerJob?.cancel()
             instance.collectorJob?.cancel()
             popupQueueService.removePopup("timer_$id")
-            
+
             soundPlayer.stopSound() // Stop alarm/vibration immediately on removal
-            
+
             val updated = _activeInstances.value.toMutableMap()
             updated.remove(id)
             _activeInstances.value = updated
-            
+
             updateFocusLockedState()
 
             if (_foregroundInstanceId.value == id) {
                 val nextForeground = updated.values.firstOrNull { it.isRunning.value }
                     ?: updated.values.firstOrNull()
                 _foregroundInstanceId.value = nextForeground?.id
-                
+
                 if (nextForeground == null) {
                     val defaultPreset = _timerPresets.value.firstOrNull()
                     _activeTimerPreset.value = defaultPreset
@@ -583,7 +622,8 @@ class TimerEngine @Inject constructor(
     }
 
     private fun updateFocusLockedState() {
-        _isFocusLocked.value = _activeInstances.value.values.any { it.mode == TimerMode.FOCUS && it.isRunning.value }
+        _isFocusLocked.value =
+            _activeInstances.value.values.any { it.mode == TimerMode.FOCUS && it.isRunning.value }
     }
 
     // --- Helper methods for query states across instances ---

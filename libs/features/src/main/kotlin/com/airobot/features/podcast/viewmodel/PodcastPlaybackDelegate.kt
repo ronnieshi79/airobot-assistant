@@ -4,12 +4,12 @@ import android.util.Log
 import androidx.media3.common.Player
 import com.airobot.features.aiserv.event.AiEvent
 import com.airobot.features.aiserv.event.AiEventDispatcher
+import com.airobot.features.aiserv.popup.OverlayCoordinator
+import com.airobot.features.aiserv.popup.OverlayTags
 import com.airobot.features.podcast.data.PodcastRepository
 import com.airobot.features.podcast.data.model.PodcastEpisode
 import com.airobot.features.podcast.service.PlaybackState
 import com.airobot.features.podcast.service.PodcastPlaybackService
-import com.airobot.features.state.OverlayCoordinator
-import com.airobot.features.state.OverlayType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -55,7 +55,7 @@ class PodcastPlaybackDelegate @Inject constructor(
 
     /** Whether this delegate has been initialized by a ViewModel. */
     val isInitialized: Boolean get() = true
-    
+
     private var playbackJob: Job? = null
     private var playbackObserverJob: Job? = null
 
@@ -79,9 +79,10 @@ class PodcastPlaybackDelegate @Inject constructor(
 
                 // Treat the player as playing if it is either actually playing or preparing/buffering (playWhenReady is true and state is BUFFERING or READY)
                 val exo = playbackService.getPlayer()
-                val isPreparingOrPlaying = exo != null && exo.playWhenReady && 
+                val isPreparingOrPlaying = exo != null && exo.playWhenReady &&
                     (exo.playbackState == Player.STATE_BUFFERING || exo.playbackState == Player.STATE_READY)
-                val isReallyPlaying = state.isPlaying || (isPreparingOrPlaying && state.activeEpisodeId == active.id)
+                val isReallyPlaying =
+                    state.isPlaying || (isPreparingOrPlaying && state.activeEpisodeId == active.id)
                 val playStateChanged = isReallyPlaying != lastRecordedPlayState
                 lastRecordedPlayState = isReallyPlaying
                 _isPlaying.value = isReallyPlaying
@@ -94,14 +95,15 @@ class PodcastPlaybackDelegate @Inject constructor(
                 }
 
                 // Update episode progress in memory
-                val isPlayed = hasEnded || state.currentPositionMs >= state.durationMs * 0.95f || active.played
+                val isPlayed =
+                    hasEnded || state.currentPositionMs >= state.durationMs * 0.95f || active.played
                 val updated = active.copy(
                     progress = _progress.value,
                     lastPositionMs = if (hasEnded) 0L else state.currentPositionMs,
                     played = isPlayed
                 )
                 _activeEpisode.value = updated
-                
+
                 val updatedEpisodes = dataDelegate.episodes.value.map { ep ->
                     if (ep.id == active.id) updated else ep
                 }
@@ -284,7 +286,10 @@ class PodcastPlaybackDelegate @Inject constructor(
                 startPositionMs = episode.lastPositionMs
             )
             // sessionStartTimestamp will be set when playbackState transitions to isPlaying=true
-            Log.d(TAG, "Started real playback: uri=${episode.mediaUri}, resume=${episode.lastPositionMs}ms")
+            Log.d(
+                TAG,
+                "Started real playback: uri=${episode.mediaUri}, resume=${episode.lastPositionMs}ms"
+            )
         } else {
             // Demo episode: simulated ticker
             sessionStartTimestamp = System.currentTimeMillis()
@@ -359,7 +364,10 @@ class PodcastPlaybackDelegate @Inject constructor(
                     progress = prog,
                     played = played
                 )
-                Log.d(TAG, "Saved playback progress: id=${active.id}, pos=${state.currentPositionMs}ms, prog=$prog%")
+                Log.d(
+                    TAG,
+                    "Saved playback progress: id=${active.id}, pos=${state.currentPositionMs}ms, prog=$prog%"
+                )
             }
         }
     }
@@ -403,7 +411,7 @@ class PodcastPlaybackDelegate @Inject constructor(
         val isPlayed = prog >= 95f || currentActive.played
         val updated = currentActive.copy(progress = prog, played = isPlayed)
         _activeEpisode.value = updated
-        
+
         val updatedEpisodes = dataDelegate.episodes.value.map { ep ->
             if (ep.id == currentActive.id) updated else ep
         }
@@ -419,13 +427,13 @@ class PodcastPlaybackDelegate @Inject constructor(
         val strategy = DefaultPodcastRecommendationStrategy()
         val allEpisodes = dataDelegate.episodes.value
         val recommended = strategy.recommend(allEpisodes, _activeEpisode.value, _isPlaying.value)
-        
+
         val normalized = when (type?.trim()?.lowercase()) {
             "audio", "音频" -> "audio"
             "video", "视频" -> "video"
             else -> null
         }
-        
+
         return if (normalized != null) {
             recommended.filter { ep ->
                 val epType = ep.type.trim().lowercase()
@@ -443,24 +451,24 @@ class PodcastPlaybackDelegate @Inject constructor(
     fun playRecommended(type: String? = null): Boolean {
         Log.d(TAG, "playRecommended: type=$type")
         val active = _activeEpisode.value
-        
+
         val normalized = when (type?.trim()?.lowercase()) {
             "audio", "音频" -> "audio"
             "video", "视频" -> "video"
             else -> null
         }
-        
+
         // If an episode of correct type is active, just make sure overlay is shown and resume
         if (active != null) {
             val activeType = active.type.trim().lowercase()
-            val matchesType = normalized == null || 
+            val matchesType = normalized == null ||
                 if (normalized == "audio") {
                     activeType == "audio" || activeType == "音频"
                 } else {
                     activeType == "video" || activeType == "视频"
                 }
             if (matchesType) {
-                overlayCoordinator.showOverlay(OverlayType.PODCAST)
+                overlayCoordinator.showOverlay(OverlayTags.PODCAST)
                 if (!_isPlaying.value) {
                     resume()
                 }
@@ -474,7 +482,7 @@ class PodcastPlaybackDelegate @Inject constructor(
             Log.w(TAG, "playRecommended: recommended list is empty for type=$type")
             return false
         }
-        overlayCoordinator.showOverlay(OverlayType.PODCAST)
+        overlayCoordinator.showOverlay(OverlayTags.PODCAST)
         playEpisode(recommended.first())
         return true
     }
@@ -493,7 +501,7 @@ class PodcastPlaybackDelegate @Inject constructor(
         } else {
             recommended.first()
         }
-        overlayCoordinator.showOverlay(OverlayType.PODCAST)
+        overlayCoordinator.showOverlay(OverlayTags.PODCAST)
         playEpisode(nextEpisode)
         return true
     }
@@ -501,7 +509,7 @@ class PodcastPlaybackDelegate @Inject constructor(
     fun pause() {
         val currentActive = _activeEpisode.value ?: return
         if (!_isPlaying.value) return // already paused
-        
+
         if (currentActive.isDiy && currentActive.mediaUri != null) {
             playbackService.pause()
             savePlaybackProgress()
@@ -530,7 +538,7 @@ class PodcastPlaybackDelegate @Inject constructor(
     fun resume() {
         val currentActive = _activeEpisode.value ?: return
         if (_isPlaying.value) return // already playing
-        
+
         if (currentActive.isDiy && currentActive.mediaUri != null) {
             playbackService.resume()
         } else {

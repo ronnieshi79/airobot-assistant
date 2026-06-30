@@ -37,7 +37,7 @@ import com.airobot.features.clock.cards.widgets.AiSettingSegmentedButton
 import com.airobot.features.clock.cards.widgets.AiSettingSwitch
 import com.airobot.features.clock.cards.widgets.AiSettingTextField
 import com.airobot.features.clock.data.model.PresetItem
-import com.airobot.features.state.TimerMode
+import com.airobot.features.clock.data.model.TimerMode
 import com.airobot.framework.theme.RobotTheme
 
 /**

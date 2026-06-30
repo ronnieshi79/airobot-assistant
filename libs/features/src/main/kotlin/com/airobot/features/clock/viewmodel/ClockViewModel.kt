@@ -4,9 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.airobot.features.clock.data.model.AlarmItem
-import com.airobot.features.clock.data.model.PresetItem
 import com.airobot.features.clock.data.model.HourlyChimeConfig
-import com.airobot.features.state.TimerMode
+import com.airobot.features.clock.data.model.PresetItem
+import com.airobot.features.clock.data.model.TimerMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
@@ -17,7 +17,7 @@ import javax.inject.Inject
  *
  * Implements a Clean Architecture Facade by delegating distinct responsibilities
  * to AlarmDelegate, TimerEngine, and HourlyChimeManager helper classes.
- * 
+ *
  * Outdated KDoc note: Design is now standard with 4 fixed alarm slots.
  */
 @HiltViewModel
@@ -52,7 +52,7 @@ class ClockViewModel @Inject constructor(
 
     init {
         Log.d(TAG, "Initializing ClockViewModel Facade")
-        
+
         // Initialize independent sub-managers
         hourlyChimeManager.initialize(
             coroutineScope = viewModelScope,
@@ -64,7 +64,7 @@ class ClockViewModel @Inject constructor(
             alarmDelegate.pendingAlarms,
             { alarmDelegate.clearPendingAlarms() }
         )
-        
+
         // Initialize alarm delegate with query states and callback linkages
         alarmDelegate.initialize(
             coroutineScope = viewModelScope,

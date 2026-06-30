@@ -25,7 +25,6 @@ import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.NoteAlt
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.outlined.WbSunny
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,11 +40,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.airobot.features.aiserv.cards.widgets.AetherRemindBanner
-import com.airobot.features.aiserv.cards.widgets.RemindPage
+import com.airobot.features.aiserv.guidance.AetherRemindBanner
+import com.airobot.features.aiserv.guidance.RemindPage
 import com.airobot.features.schedule.data.ScheduleUtils
 import com.airobot.features.schedule.viewmodel.ScheduleViewModel
-import com.airobot.features.state.SubCategory
+// Removed SubCategory import
 import com.airobot.framework.theme.RobotTheme
 import com.airobot.framework.theme.ScheduleDateBg
 import java.util.Calendar
@@ -58,13 +57,13 @@ import java.util.Calendar
 @Composable
 fun ScheduleHomeCard(
     scheduleViewModel: ScheduleViewModel,
-    onNavigateToSubCategory: (SubCategory) -> Unit,
+    onNavigateToBoard: () -> Unit,
     modifier: Modifier = Modifier,
     onRemindClick: (String) -> Unit = {}
 ) {
     val isDark = RobotTheme.isDark
     val time = remember { Calendar.getInstance() }
-    
+
     val schedulesList by scheduleViewModel.schedules.collectAsState()
     val todosList by scheduleViewModel.todos.collectAsState()
 
@@ -72,20 +71,42 @@ fun ScheduleHomeCard(
     val todayDOW = time.get(Calendar.DAY_OF_WEEK) - 1 // 0=Sun, 1=Mon, ..., 6=Sat
 
     // Filter today's schedules & todos
-    val todaySchedules = schedulesList.filter { it.date == todayStr || (it.date == null && it.dayOfWeek == todayDOW) }
+    val todaySchedules =
+        schedulesList.filter { it.date == todayStr || (it.date == null && it.dayOfWeek == todayDOW) }
     val todayTodos = todosList.filter { it.date == todayStr }
 
     val combinedItems = remember(todaySchedules, todayTodos) {
         val list = mutableListOf<CombinedDisplayItem>()
-        todayTodos.forEach { list.add(CombinedDisplayItem("todo", it.id, it.task, it.status == "closed")) }
-        todaySchedules.forEach { list.add(CombinedDisplayItem("schedule", it.id, it.task, it.completed)) }
+        todayTodos.forEach {
+            list.add(
+                CombinedDisplayItem(
+                    "todo",
+                    it.id,
+                    it.task,
+                    it.status == "closed"
+                )
+            )
+        }
+        todaySchedules.forEach {
+            list.add(
+                CombinedDisplayItem(
+                    "schedule",
+                    it.id,
+                    it.task,
+                    it.completed
+                )
+            )
+        }
         list
     }
 
     val todayInfo = remember(time) { ScheduleUtils.getTodayInfo(time) }
 
-    val monthName = time.getDisplayName(Calendar.MONTH, Calendar.LONG, java.util.Locale.CHINESE) ?: "六月"
-    val weekDayName = time.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, java.util.Locale.CHINESE) ?: "星期二"
+    val monthName =
+        time.getDisplayName(Calendar.MONTH, Calendar.LONG, java.util.Locale.CHINESE) ?: "六月"
+    val weekDayName =
+        time.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, java.util.Locale.CHINESE)
+            ?: "星期二"
     val dayOfMonth = time.get(Calendar.DAY_OF_MONTH)
 
     // Aether Banner Pages
@@ -129,7 +150,11 @@ fun ScheduleHomeCard(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(if (isDark) Color(0xFF6366F1).copy(alpha = 0.2f) else Color(0xFFEEF2F6)),
+                    .background(
+                        if (isDark) Color(0xFF6366F1).copy(alpha = 0.2f) else Color(
+                            0xFFEEF2F6
+                        )
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -198,7 +223,12 @@ fun ScheduleHomeCard(
                         fontWeight = FontWeight.Black,
                         letterSpacing = (-2).sp
                     )
-                    Spacer(modifier = Modifier.height(2.dp).width(32.dp).background(Color.White.copy(alpha = 0.3f)))
+                    Spacer(
+                        modifier = Modifier
+                            .height(2.dp)
+                            .width(32.dp)
+                            .background(Color.White.copy(alpha = 0.3f))
+                    )
                     Text(
                         text = weekDayName,
                         color = Color.White.copy(alpha = 0.9f),
@@ -220,7 +250,11 @@ fun ScheduleHomeCard(
                         .fillMaxWidth()
                         .padding(bottom = if (combinedItems.size > 3) 18.dp else 0.dp)
                         .clip(RoundedCornerShape(32.dp))
-                        .background(if (isDark) Color(0xFF1E293B).copy(alpha = 0.6f) else Color(0xFFF8FAFC))
+                        .background(
+                            if (isDark) Color(0xFF1E293B).copy(alpha = 0.6f) else Color(
+                                0xFFF8FAFC
+                            )
+                        )
                         .border(
                             1.dp,
                             if (isDark) Color.White.copy(alpha = 0.05f) else Color(0xFFF1F5F9),
@@ -244,7 +278,11 @@ fun ScheduleHomeCard(
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (isDark) Color(0xFF0284C7).copy(alpha = 0.2f) else Color(0xFFE0F2FE))
+                                .background(
+                                    if (isDark) Color(0xFF0284C7).copy(alpha = 0.2f) else Color(
+                                        0xFFE0F2FE
+                                    )
+                                )
                                 .padding(horizontal = 10.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -267,7 +305,11 @@ fun ScheduleHomeCard(
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (isDark) Color(0xFFD97706).copy(alpha = 0.2f) else Color(0xFFFEF3C7))
+                                .background(
+                                    if (isDark) Color(0xFFD97706).copy(alpha = 0.2f) else Color(
+                                        0xFFFEF3C7
+                                    )
+                                )
                                 .padding(horizontal = 10.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -286,14 +328,18 @@ fun ScheduleHomeCard(
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(
                                     if (hasFestival) {
-                                        if (isDark) Color(0xFFE11D48).copy(alpha = 0.2f) else Color(0xFFFFE4E6)
+                                        if (isDark) Color(0xFFE11D48).copy(alpha = 0.2f) else Color(
+                                            0xFFFFE4E6
+                                        )
                                     } else {
                                         if (isDark) Color(0xFF475569).copy(alpha = 0.5f) else Color.White
                                     }
                                 )
                                 .border(
                                     width = if (hasFestival) 0.dp else 1.dp,
-                                    color = if (isDark) Color.White.copy(alpha = 0.1f) else Color(0xFFE2E8F0),
+                                    color = if (isDark) Color.White.copy(alpha = 0.1f) else Color(
+                                        0xFFE2E8F0
+                                    ),
                                     shape = RoundedCornerShape(12.dp)
                                 )
                                 .padding(horizontal = 10.dp, vertical = 6.dp),
@@ -346,7 +392,9 @@ fun ScheduleHomeCard(
                                     .background(if (isDark) Color(0xFF334155).copy(alpha = 0.4f) else Color.White)
                                     .border(
                                         1.dp,
-                                        if (isDark) Color.White.copy(alpha = 0.05f) else Color(0xFFEDF2F7),
+                                        if (isDark) Color.White.copy(alpha = 0.05f) else Color(
+                                            0xFFEDF2F7
+                                        ),
                                         RoundedCornerShape(20.dp)
                                     )
                                     .clickable {
@@ -419,7 +467,7 @@ fun ScheduleHomeCard(
                                 shape = RoundedCornerShape(18.dp)
                             )
                             .clickable {
-                                onNavigateToSubCategory(SubCategory.SCHEDULE_BOARD)
+                                onNavigateToBoard()
                             },
                         contentAlignment = Alignment.Center
                     ) {
