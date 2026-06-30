@@ -35,19 +35,19 @@ import com.airobot.framework.layout.DrawerMenuItemData
 import com.airobot.assistant.settings.AiRobotConfig
 import com.airobot.assistant.settings.RoleConfig
 import com.airobot.assistant.settings.SystemAuth
-import com.airobot.assistant.ui.comp.services.DEFAULT_SERVICE_CARDS
+import com.airobot.assistant.assembly.DEFAULT_SERVICE_CARDS
 import com.airobot.airbot.domain.model.ConversationSubState
 import com.airobot.airbot.domain.model.RobotState
 import com.airobot.airbot.viewmodel.RobotUiState
 import com.airobot.airbot.viewmodel.RobotVisualState
 import com.airobot.assistant.viewmodel.MainShellViewModel
 import com.airobot.airbot.viewmodel.ConversationViewModel
-import com.airobot.assistant.viewmodel.ServiceViewModel
 import com.airobot.framework.theme.StatusAmber
 import com.airobot.framework.theme.StatusCyan
 import com.airobot.framework.theme.StatusEmerald
 import com.airobot.framework.theme.StatusRed
-import com.airobot.assistant.ui.comp.services.ServiceSubState
+import com.airobot.features.aiserv.viewmodel.OverlayViewModel
+import com.airobot.framework.util.LanguageMode
 
 /**
  * 机器人服务主屏幕
@@ -57,10 +57,12 @@ import com.airobot.assistant.ui.comp.services.ServiceSubState
 @Composable
 fun AppMainScreen(
     themeMode: RobotThemeMode = RobotThemeMode.DARK,
+    languageMode: LanguageMode = LanguageMode.CHINESE,
     onToggleTheme: () -> Unit = {},
+    onLanguageChange: (LanguageMode) -> Unit = {},
     mainShellViewModel: MainShellViewModel = hiltViewModel(),
     conversationViewModel: ConversationViewModel = hiltViewModel(),
-    serviceViewModel: ServiceViewModel = hiltViewModel()
+    overlayViewModel: OverlayViewModel = hiltViewModel()
 ) {
     // 权限管理
     val permissionsState = rememberMultiplePermissionsState(
@@ -89,10 +91,8 @@ fun AppMainScreen(
     // 组合音量等级：对话时用对话VM的，非对话时用主VM的
     val audioLevel = if (robotState is RobotState.Conversation) convAudioLevel else mainVoiceLevel
 
-    // 从 ServiceViewModel 收集功能状态
-    val activeCard by serviceViewModel.activeCard.collectAsState()
-    val activeServiceData by serviceViewModel.activeServiceData.collectAsState()
-    val serviceSubState by serviceViewModel.serviceSubState.collectAsState()
+    // 从 OverlayViewModel 收集弹窗状态
+    val activeOverlay by overlayViewModel.activeOverlay.collectAsState()
 
     // 本地UI状态
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -121,9 +121,7 @@ fun AppMainScreen(
         robotState,
         currentRoundUserText,
         currentRoundAiText,
-        activeCard,
-        activeServiceData,
-        serviceSubState,
+        activeOverlay,
         currentCard // currentCard 随 currentCardIndex 变化
     ) {
         val visualState = when (val s = robotState) {
@@ -137,13 +135,7 @@ fun AppMainScreen(
                 ConversationSubState.THINKING -> RobotVisualState.THINKING
                 ConversationSubState.SPEAKING -> RobotVisualState.SPEAKING
             }
-            is RobotState.FunctionService -> when (s.subState) {
-                AirbotServiceSubState.IDLE -> RobotVisualState.IDLE
-                AirbotServiceSubState.RUNNING -> RobotVisualState.FOCUS
-                AirbotServiceSubState.PAUSED -> RobotVisualState.IDLE
-                AirbotServiceSubState.COMPLETED -> RobotVisualState.HAPPY
-                AirbotServiceSubState.CANCELLED -> RobotVisualState.IDLE
-            }
+            is RobotState.FunctionService -> RobotVisualState.IDLE // Or keep original logic if you have access to substate
         }
 
         robotUiState = robotUiState.copy(
@@ -151,7 +143,7 @@ fun AppMainScreen(
             isConnected = robotState !is RobotState.Offline,
             currentUserMsg = currentRoundUserText,
             currentAiMsg = currentRoundAiText,
-            interactionType = if (activeCard != null) InteractionType.CARD else InteractionType.CHAT,
+            interactionType = if (activeOverlay.isNotEmpty()) InteractionType.CARD else InteractionType.CHAT,
             statusTip = currentCard.statusTip
         )
     }
@@ -206,8 +198,10 @@ fun AppMainScreen(
         drawerContent = {
             SystemDrawer(
                 menuItems = drawerMenuItems,
+                languageMode = languageMode,
                 onClose = { scope.launch { drawerState.close() } },
-                onToggleTheme = onToggleTheme
+                onToggleTheme = onToggleTheme,
+                onLanguageChange = onLanguageChange
             )
         },
         gesturesEnabled = drawerState.isOpen
@@ -277,8 +271,8 @@ fun AppMainScreen(
                         roleName = activeCharacter?.roleName ?: "AETHER",
                         audioLevel = audioLevel,
                         isConnected = robotUiState.isConnected,
-                        isTimerActive = serviceSubState == ServiceSubState.RUNNING || serviceSubState == ServiceSubState.PAUSED,
-                        isTimerPaused = serviceSubState == ServiceSubState.PAUSED,
+                        isTimerActive = activeOverlay == "overlay_timer",
+                        isTimerPaused = false, // Timer pause state is managed inside timer overlay now
                         currentRoundAiText = currentRoundAiText,
                         onStartListening = {
                             if (permissionsState.allPermissionsGranted) {
@@ -292,7 +286,7 @@ fun AppMainScreen(
                         },
                         onStopListening = { conversationViewModel.stopAutoConversation() },
                         onInterruptSpeak = { conversationViewModel.interrupt() },
-                        onTimerControl = { action -> serviceViewModel.handleTimerAction(action) },
+                        onTimerControl = { /* Timer control moved to overlay */ },
                         onCommandClick = { command ->
                             if (permissionsState.allPermissionsGranted) {
                                 robotUiState = robotUiState.copy(
@@ -344,7 +338,7 @@ fun AppMainScreen(
                             currentCardIndex = currentCardIndex,
                             onPageChanged = { currentCardIndex = it },
                             statusTip = robotUiState.statusTip,
-                            activeCard = activeCard,
+                            activeOverlay = activeOverlay,
                             onCardClick = { card ->
                                 val targetCard = if (serviceCards.contains(card)) card else serviceCards[currentCardIndex]
                                 robotUiState = robotUiState.copy(
@@ -353,7 +347,7 @@ fun AppMainScreen(
                                     currentUserMsg = null,
                                     currentAiMsg = null
                                 )
-                                serviceViewModel.startService(targetCard)
+                                overlayViewModel.showOverlay(targetCard.overlayTag)
                                 if (permissionsState.allPermissionsGranted) {
                                     conversationViewModel.startConversation()
                                 }
@@ -362,7 +356,7 @@ fun AppMainScreen(
                                 robotUiState = robotUiState.copy(
                                     visualState = RobotVisualState.IDLE
                                 )
-                                serviceViewModel.closeService()
+                                overlayViewModel.hideOverlay()
                                 conversationViewModel.interrupt()
                             },
                             onWakeupAirobot = {

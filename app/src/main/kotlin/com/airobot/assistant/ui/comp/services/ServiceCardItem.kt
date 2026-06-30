@@ -21,8 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.airobot.framework.R
-import com.airobot.assistant.ui.comp.services.ServiceCard
-import com.airobot.assistant.ui.comp.services.ServiceCardType
+import com.airobot.assistant.assembly.ServiceCard
 import com.airobot.framework.theme.RobotTheme
 
 /**
@@ -98,7 +97,7 @@ fun ServiceCardItem(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(id = getServiceCardIcon(card.type)),
+                    painter = painterResource(id = card.iconResId),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
                     tint = Color.White
@@ -197,49 +196,3 @@ private fun CardProgressBar(
         )
     }
 }
-
-/**
- * 获取服务卡片图标
- */
-fun getServiceCardIcon(type: ServiceCardType): Int {
-    return when (type) {
-        ServiceCardType.PODCAST -> R.drawable.music
-        ServiceCardType.PODCAST_DIY -> R.drawable.palette
-        ServiceCardType.NOTEPAD -> R.drawable.book
-    }
-}
-
-/**
- * 预定义的服务卡片池
- */
-val DEFAULT_SERVICE_CARDS = listOf(
-    ServiceCard(
-        id = "card-podcast",
-        type = ServiceCardType.PODCAST,
-        title = "AI播客",
-        content = "你的专属智能播客",
-        statusTip = "听点有意思的",
-        iconResId = R.drawable.music,
-        demoContent = "AI播客需要后端支持"
-    ),
-    ServiceCard(
-        id = "card-podcast-diy",
-        type = ServiceCardType.PODCAST_DIY,
-        title = "播客DIY",
-        content = "创作你的播客节目",
-        statusTip = "来点灵感",
-        iconResId = R.drawable.palette,
-        demoContent = "DIY功能需要后端支持"
-    ),
-    ServiceCard(
-        id = "card-notepad",
-        type = ServiceCardType.NOTEPAD,
-        title = "AI记事本",
-        content = "智能记录灵感",
-        statusTip = "记下你的想法",
-        iconResId = R.drawable.book,
-        demoContent = "记事本功能需要后端支持"
-    )
-)
-
-

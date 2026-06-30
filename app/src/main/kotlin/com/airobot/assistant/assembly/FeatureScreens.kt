@@ -1,14 +1,12 @@
 package com.airobot.assistant.assembly
 
 import androidx.compose.runtime.Composable
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.airobot.assistant.ui.comp.services.ServiceCard
+import com.airobot.assistant.assembly.ServiceCard
 import com.airobot.assistant.ui.comp.services.ServiceCardCarousel
-import com.airobot.assistant.ui.comp.services.ServiceCardType
-import com.airobot.features.aiserv.cards.AiNotepadOverlay
-import com.airobot.features.podcast.cards.PodcastDiyOverlay
-import com.airobot.features.podcast.cards.PodcastPlayerOverlay
-import com.airobot.features.podcast.viewmodel.PodcastViewModel
+import com.airobot.features.aiserv.popup.OverlayTags
+import com.airobot.features.aiserv.routes.AiNotepadOverlayRoute
+import com.airobot.features.podcast.routes.PodcastOverlayRoute
+import com.airobot.features.podcast.routes.PodcastDiyOverlayRoute
 
 @Composable
 fun FeatureScreens(
@@ -18,10 +16,9 @@ fun FeatureScreens(
     onPageChanged: (Int) -> Unit,
     statusTip: String,
     onCardClick: (ServiceCard) -> Unit,
-    activeCard: ServiceCard?,
+    activeOverlay: String,
     onCloseOverlay: () -> Unit,
-    onWakeupAirobot: () -> Unit,
-    podcastViewModel: PodcastViewModel = hiltViewModel()
+    onWakeupAirobot: () -> Unit
 ) {
     if (!isCardMode) {
         // 展示右侧推荐卡片
@@ -34,28 +31,22 @@ fun FeatureScreens(
         )
     } else {
         // 展示功能详情Overlay
-        activeCard?.let { card ->
-            when (card.type) {
-                ServiceCardType.PODCAST -> {
-                    PodcastPlayerOverlay(
-                        onClose = onCloseOverlay,
-                        onWakeupAirobot = onWakeupAirobot,
-                        podcastViewModel = podcastViewModel
+        if (activeOverlay.isNotEmpty()) {
+            when (activeOverlay) {
+                OverlayTags.PODCAST -> {
+                    PodcastOverlayRoute(
+                        onHideOverlay = onCloseOverlay,
+                        onWakeupAirobot = onWakeupAirobot
                     )
                 }
-                ServiceCardType.PODCAST_DIY -> {
-                    PodcastDiyOverlay(
-                        podcastViewModel = podcastViewModel,
-                        onClose = onCloseOverlay
+                OverlayTags.DIY_PODCAST -> {
+                    PodcastDiyOverlayRoute(
+                        onHideOverlay = onCloseOverlay
                     )
                 }
-                ServiceCardType.NOTEPAD -> {
-                    AiNotepadOverlay(
-                        alarmHistory = emptyList(),
-                        timerHistory = emptyList(),
-                        focusHistory = emptyList(),
-                        podcastHistory = emptyList(),
-                        onClose = onCloseOverlay
+                OverlayTags.LOGBOOK -> {
+                    AiNotepadOverlayRoute(
+                        onHideOverlay = onCloseOverlay
                     )
                 }
             }

@@ -1,4 +1,4 @@
-﻿package com.airobot.assistant.ui.comp.services
+package com.airobot.assistant.ui.comp.services
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
@@ -12,7 +12,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.airobot.assistant.ui.comp.services.ServiceCard
+import com.airobot.assistant.assembly.ServiceCard
 import com.airobot.framework.theme.RobotTheme
 
 /**

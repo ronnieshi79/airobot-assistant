@@ -20,6 +20,9 @@ import com.airobot.framework.theme.RobotTheme
 import com.airobot.framework.theme.RobotThemeMode
 
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import com.airobot.framework.util.LanguageMode
+import com.airobot.features.FeaturesInitializer
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -27,8 +30,14 @@ class MainActivity : ComponentActivity() {
         private const val TAG = "MainActivity"
     }
 
+    @Inject
+    lateinit var featuresInitializer: FeaturesInitializer
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Initialize background features
+        featuresInitializer.initialize()
 
         // 设置全屏模式 - 沉浸式系统栏设计
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -47,6 +56,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             var themeMode by remember { mutableStateOf(RobotThemeMode.DARK) }
+            var languageMode by remember { mutableStateOf(LanguageMode.CHINESE) }
 
             AiRobotTheme(themeMode = themeMode) {
                 Surface(
@@ -55,6 +65,11 @@ class MainActivity : ComponentActivity() {
                 ) {
                     AppMainScreen(
                         themeMode = themeMode,
+                        languageMode = languageMode,
+                        onLanguageChange = { newMode ->
+                            languageMode = newMode
+                            Log.d(TAG, "切换语言: $languageMode")
+                        },
                         onToggleTheme = {
                             themeMode = if (themeMode == RobotThemeMode.DARK) {
                                 RobotThemeMode.LIGHT
