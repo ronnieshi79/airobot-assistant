@@ -41,16 +41,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.airobot.features.R
 import com.airobot.features.podcast.cards.library.EpisodeLibraryCardItem
 import com.airobot.features.podcast.cards.library.LibraryFilterPill
 import com.airobot.features.podcast.cards.widgets.verticalScrollbar
-import com.airobot.features.podcast.data.model.PodcastEpisode
 import com.airobot.features.podcast.viewmodel.PodcastViewModel
-import com.airobot.features.state.OverlayType
-import com.airobot.features.state.OverlayViewModel
 import com.airobot.framework.cards.ModuleServiceCard
 import com.airobot.framework.theme.PodcastFeaturedBg
 import com.airobot.framework.theme.RobotTheme
@@ -65,7 +61,6 @@ import com.airobot.framework.theme.RobotTheme
 fun PodcastLibraryCard(
     modifier: Modifier = Modifier,
     podcastViewModel: PodcastViewModel = hiltViewModel(),
-    overlayViewModel: OverlayViewModel = hiltViewModel(),
     onPlayClick: () -> Unit = {}
 ) {
     val isDark = RobotTheme.isDark
@@ -118,7 +113,9 @@ fun PodcastLibraryCard(
                 // --- 1. Latest Podcast (最新播客) Section ---
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {

@@ -1,6 +1,5 @@
 package com.airobot.features.clock.data.model
 
-import com.airobot.features.state.TimerMode
 import kotlinx.serialization.Serializable
 
 /**

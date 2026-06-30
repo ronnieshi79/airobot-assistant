@@ -29,17 +29,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.airobot.features.R
-import com.airobot.features.aiserv.cards.widgets.AetherRemindBanner
-import com.airobot.features.aiserv.cards.widgets.RemindPage
+import com.airobot.features.aiserv.guidance.AetherRemindBanner
+import com.airobot.features.aiserv.guidance.RemindPage
+import com.airobot.features.aiserv.popup.PopupServiceItem
 import com.airobot.features.clock.cards.home.SkeuomorphicClockFace
-import com.airobot.features.state.PopupQueueViewModel
 import com.airobot.framework.cards.ModuleServiceCard
 import com.airobot.framework.theme.RobotTheme
 
 @Composable
 fun ClockHomeCard(
     modifier: Modifier = Modifier,
-    popupQueueViewModel: PopupQueueViewModel = hiltViewModel(),
+    queueItems: List<PopupServiceItem> = emptyList(),
     clockViewModel: com.airobot.features.clock.viewmodel.ClockViewModel = hiltViewModel(),
     onAlarmClick: () -> Unit = {},
     onFocusClick: () -> Unit = {},
@@ -48,7 +48,6 @@ fun ClockHomeCard(
     onChimeClick: () -> Unit = {}
 ) {
     val isDark = RobotTheme.isDark
-    val queueItems by popupQueueViewModel.queue.collectAsState()
     val chimeConfig by clockViewModel.chimeConfig.collectAsState()
 
     // Multi-page recommendation items for Clock Home

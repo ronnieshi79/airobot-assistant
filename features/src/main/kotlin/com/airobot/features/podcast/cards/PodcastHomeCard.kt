@@ -14,12 +14,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
@@ -41,12 +39,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.airobot.features.R
-import com.airobot.features.aiserv.cards.widgets.AetherRemindBanner
-import com.airobot.features.aiserv.cards.widgets.RemindPage
+import com.airobot.features.aiserv.guidance.AetherRemindBanner
+import com.airobot.features.aiserv.guidance.RemindPage
 import com.airobot.features.podcast.cards.home.NowPlayingWidget
 import com.airobot.features.podcast.cards.home.PodcastHomeEpisodeListItem
 import com.airobot.features.podcast.cards.home.PodcastStudioMic
-import com.airobot.features.podcast.data.model.PodcastEpisode
 import com.airobot.features.podcast.viewmodel.PodcastViewModel
 import com.airobot.framework.cards.ModuleServiceCard
 import com.airobot.framework.theme.PodcastFeaturedBg
@@ -148,7 +145,12 @@ fun PodcastHomeCard(
                             color = RobotTheme.colors.cardBorder,
                             shape = RoundedCornerShape(32.dp)
                         )
-                        .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 26.dp), // extra padding for hanging button
+                        .padding(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 14.dp,
+                            bottom = 26.dp
+                        ), // extra padding for hanging button
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Label Header
@@ -209,7 +211,8 @@ fun PodcastHomeCard(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        val elementColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B) // text-slate-400 / text-slate-500
+                        val elementColor =
+                            if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B) // text-slate-400 / text-slate-500
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
                             contentDescription = null,

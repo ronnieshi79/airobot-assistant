@@ -3,8 +3,8 @@ package com.airobot.features.clock.cards.home
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.airobot.framework.cards.PopupQueueWidget
-import com.airobot.framework.cards.PopupQueueWidgetItem
+import com.airobot.features.aiserv.popup.PopupQueueWidget
+import com.airobot.features.aiserv.popup.PopupQueueWidgetItem
 
 /**
  * Sub-dial widget wrapper that delegates to the reusable [PopupQueueWidget].

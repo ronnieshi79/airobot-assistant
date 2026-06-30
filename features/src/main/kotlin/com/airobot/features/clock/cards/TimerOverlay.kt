@@ -28,10 +28,10 @@ import com.airobot.features.clock.cards.timer.TimerEarsDecoration
 import com.airobot.features.clock.cards.timer.TimerFocusScenarios
 import com.airobot.features.clock.data.model.AlarmItem
 import com.airobot.features.clock.data.model.PresetItem
-import com.airobot.features.state.TimerMode
+import com.airobot.features.clock.data.model.TimerMode
+import com.airobot.framework.cards.OverlayBackdrop
 import com.airobot.framework.cards.OverlayCloseButton
 import com.airobot.framework.cards.OverlayCloseMode
-import com.airobot.framework.cards.OverlayBackdrop
 import com.airobot.framework.theme.RobotTheme
 
 /**
