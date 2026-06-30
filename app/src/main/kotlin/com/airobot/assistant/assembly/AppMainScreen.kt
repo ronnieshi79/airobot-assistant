@@ -35,7 +35,8 @@ import com.airobot.framework.layout.DrawerMenuItemData
 import com.airobot.assistant.settings.AiRobotConfig
 import com.airobot.assistant.settings.RoleConfig
 import com.airobot.assistant.settings.SystemAuth
-import com.airobot.assistant.assembly.DEFAULT_SERVICE_CARDS
+import com.airobot.assistant.assembly.APP_SUPPORTED_OVERLAYS
+import androidx.compose.ui.res.stringResource
 import com.airobot.airbot.domain.model.ConversationSubState
 import com.airobot.airbot.domain.model.RobotState
 import com.airobot.airbot.viewmodel.RobotUiState
@@ -102,9 +103,10 @@ fun AppMainScreen(
     var robotUiState by remember { mutableStateOf(RobotUiState()) }
     var currentCardIndex by remember { mutableIntStateOf(0) }
 
-    // 服务卡片定义
-    val serviceCards = DEFAULT_SERVICE_CARDS
-    val currentCard = serviceCards.getOrNull(currentCardIndex) ?: serviceCards.first()
+    // 服务卡片定义 (由 Hilt Singleton 注入的 RecommendationEngine 计算出的动态列表)
+    val serviceCards by overlayViewModel.getRecommendedCards(APP_SUPPORTED_OVERLAYS).collectAsState(initial = emptyList())
+    val currentCard = serviceCards.getOrNull(currentCardIndex) ?: serviceCards.firstOrNull()
+    val currentStatusTip = currentCard?.let { stringResource(id = it.statusTipResId) } ?: ""
 
     // 自动轮播逻辑
     LaunchedEffect(serviceCards.size, robotUiState.isInteracting) {
@@ -144,7 +146,7 @@ fun AppMainScreen(
             currentUserMsg = currentRoundUserText,
             currentAiMsg = currentRoundAiText,
             interactionType = if (activeOverlay.isNotEmpty()) InteractionType.CARD else InteractionType.CHAT,
-            statusTip = currentCard.statusTip
+            statusTip = currentStatusTip
         )
     }
 
@@ -340,7 +342,7 @@ fun AppMainScreen(
                             statusTip = robotUiState.statusTip,
                             activeOverlay = activeOverlay,
                             onCardClick = { card ->
-                                val targetCard = if (serviceCards.contains(card)) card else serviceCards[currentCardIndex]
+                                val targetCard = if (serviceCards.contains(card)) card else serviceCards.getOrNull(currentCardIndex) ?: card
                                 robotUiState = robotUiState.copy(
                                     interactionType = InteractionType.CARD,
                                     visualState = RobotVisualState.LISTENING,

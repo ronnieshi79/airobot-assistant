@@ -1,8 +1,8 @@
 package com.airobot.assistant.assembly
 
 import androidx.compose.runtime.Composable
-import com.airobot.assistant.assembly.ServiceCard
-import com.airobot.assistant.ui.comp.services.ServiceCardCarousel
+import com.airobot.features.aiserv.guidance.components.ServiceCardCarousel
+import com.airobot.features.aiserv.guidance.models.RecommendedCard
 import com.airobot.features.aiserv.popup.OverlayTags
 import com.airobot.features.aiserv.routes.AiNotepadOverlayRoute
 import com.airobot.features.podcast.routes.PodcastOverlayRoute
@@ -11,11 +11,11 @@ import com.airobot.features.podcast.routes.PodcastDiyOverlayRoute
 @Composable
 fun FeatureScreens(
     isCardMode: Boolean,
-    serviceCards: List<ServiceCard>,
+    serviceCards: List<RecommendedCard>,
     currentCardIndex: Int,
     onPageChanged: (Int) -> Unit,
     statusTip: String,
-    onCardClick: (ServiceCard) -> Unit,
+    onCardClick: (RecommendedCard) -> Unit,
     activeOverlay: String,
     onCloseOverlay: () -> Unit,
     onWakeupAirobot: () -> Unit

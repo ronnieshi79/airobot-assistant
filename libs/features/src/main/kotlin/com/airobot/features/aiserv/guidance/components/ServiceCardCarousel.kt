@@ -1,4 +1,4 @@
-package com.airobot.assistant.ui.comp.services
+package com.airobot.features.aiserv.guidance.components
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
@@ -12,37 +12,28 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.airobot.assistant.assembly.ServiceCard
+import com.airobot.features.aiserv.guidance.models.RecommendedCard
 import com.airobot.framework.theme.RobotTheme
 
 /**
- * 服务卡片轮播组件
- * 
- * Web原型对应: ProactiveServiceKit.tsx + 时钟显示
- * 
- * 功能:
- * - 自动轮播服务卡片
- * - 显示当前时间
- * - 卡片切换动画
+ * ServiceCardCarousel — Auto-rotating carousel of recommended cards.
+ * Decoupled from App module.
  */
 @Composable
 fun ServiceCardCarousel(
-    cards: List<ServiceCard>,
-    onCardClick: (ServiceCard) -> Unit,
+    cards: List<RecommendedCard>,
+    onCardClick: (RecommendedCard) -> Unit,
     currentIndex: Int,
     onPageChanged: (Int) -> Unit,
     statusTip: String? = null,
     modifier: Modifier = Modifier
 ) {
-    
-    // 已经移除了时间显示，首页时间由 TopBar 统一负责
-    
     Column(
         modifier = modifier,
-        horizontalAlignment = Alignment.Start, // 向左对齐
+        horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(32.dp)
     ) {
-        // 状态提示 (从 Airobot 模型迁移到此处)
+        // Status indicator header
         AnimatedVisibility(
             visible = statusTip != null,
             enter = fadeIn() + expandVertically(),
@@ -50,8 +41,8 @@ fun ServiceCardCarousel(
         ) {
             StatusTipHeader(tip = statusTip ?: "")
         }
-        
-        // 卡片轮播
+
+        // Carousel container
         if (cards.isNotEmpty()) {
             AnimatedContent(
                 targetState = currentIndex,
@@ -72,21 +63,16 @@ fun ServiceCardCarousel(
     }
 }
 
-/**
- * 状态提示头部 (迁移自 RobotCharacter)
- */
 @Composable
 private fun StatusTipHeader(
     tip: String,
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier
-            .padding(bottom = 8.dp, start = 4.dp), // 增加一点左边距对齐卡片内容
+        modifier = modifier.padding(bottom = 8.dp, start = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // 竖线指示器 (替换小圆点)
         Box(
             modifier = Modifier
                 .width(4.dp)
@@ -94,7 +80,7 @@ private fun StatusTipHeader(
                 .clip(RoundedCornerShape(2.dp))
                 .background(RobotTheme.colors.accent)
         )
-        
+
         Text(
             text = tip,
             color = RobotTheme.colors.textPrimary.copy(alpha = 0.9f),
@@ -106,12 +92,12 @@ private fun StatusTipHeader(
 }
 
 /**
- * 简单卡片列表（不轮播）
+ * ServiceCardList — Simple static list of recommended cards (no rotation)
  */
 @Composable
 fun ServiceCardList(
-    cards: List<ServiceCard>,
-    onCardClick: (ServiceCard) -> Unit,
+    cards: List<RecommendedCard>,
+    onCardClick: (RecommendedCard) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -127,5 +113,3 @@ fun ServiceCardList(
         }
     }
 }
-
-

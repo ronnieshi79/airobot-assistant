@@ -208,4 +208,15 @@
     <string name="podcast_diy_empty_audio">未发现可导入的音频文件</string>
     <string name="podcast_diy_empty_video">未发现可导入的视频文件</string>
     <string name="podcast_diy_empty_hint">请确保文件存放在默认扫描路径中</string>
+
+    <!-- Guidance / Card Recommendations -->
+    <string name="card_podcast_title">AI播客</string>
+    <string name="card_podcast_content">你的专属智能播客</string>
+    <string name="card_podcast_tip">听点有意思的</string>
+    <string name="card_podcast_diy_title">播客DIY</string>
+    <string name="card_podcast_diy_content">创作你的播客节目</string>
+    <string name="card_podcast_diy_tip">来点灵感</string>
+    <string name="card_notepad_title">AI记事本</string>
+    <string name="card_notepad_content">智能记录灵感</string>
+    <string name="card_notepad_tip">记下你的想法</string>
 </resources>

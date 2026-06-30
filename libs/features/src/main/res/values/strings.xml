@@ -208,4 +208,15 @@
     <string name="podcast_diy_empty_audio">No importable audio files found</string>
     <string name="podcast_diy_empty_video">No importable video files found</string>
     <string name="podcast_diy_empty_hint">Please ensure files are placed in the default scan path</string>
+
+    <!-- Guidance / Card Recommendations -->
+    <string name="card_podcast_title">AI Podcast</string>
+    <string name="card_podcast_content">Your personal smart podcast</string>
+    <string name="card_podcast_tip">Listen to something fun</string>
+    <string name="card_podcast_diy_title">Podcast DIY</string>
+    <string name="card_podcast_diy_content">Create your custom podcast</string>
+    <string name="card_podcast_diy_tip">Unleash your creativity</string>
+    <string name="card_notepad_title">AI Notepad</string>
+    <string name="card_notepad_content">Smartly capture your ideas</string>
+    <string name="card_notepad_tip">Write down your thoughts</string>
 </resources>

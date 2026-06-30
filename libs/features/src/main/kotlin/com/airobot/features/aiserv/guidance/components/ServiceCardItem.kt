@@ -1,4 +1,4 @@
-package com.airobot.assistant.ui.comp.services
+package com.airobot.features.aiserv.guidance.components
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -17,26 +17,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.airobot.framework.R
-import com.airobot.assistant.assembly.ServiceCard
+import com.airobot.features.aiserv.guidance.models.RecommendedCard
 import com.airobot.framework.theme.RobotTheme
 
 /**
- * 服务卡片组件
- *
- * Web原型对应: ProactiveServiceKit.tsx
- *
- * 功能:
- * - 显示服务卡片信息
- * - 点击交互
- * - 进度条动画
+ * ServiceCardItem — Renders an individual recommended service card.
+ * Decoupled from App module and fully localized.
  */
 @Composable
 fun ServiceCardItem(
-    card: ServiceCard,
+    card: RecommendedCard,
     onClick: () -> Unit,
     showProgress: Boolean = true,
     progressDuration: Int = 10000,
@@ -81,7 +76,7 @@ fun ServiceCardItem(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 图标
+            // Icon
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -104,7 +99,7 @@ fun ServiceCardItem(
                 )
             }
 
-            // 内容
+            // Content
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -114,12 +109,12 @@ fun ServiceCardItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = card.title,
+                        text = stringResource(id = card.titleResId),
                         color = RobotTheme.colors.textPrimary,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    // 闪烁图标（hover时显示）
+                    // Animated star shown when hovered
                     AnimatedVisibility(
                         visible = isHovered,
                         enter = fadeIn(),
@@ -134,7 +129,7 @@ fun ServiceCardItem(
                     }
                 }
                 Text(
-                    text = card.content,
+                    text = stringResource(id = card.contentResId),
                     color = RobotTheme.colors.textSecondary,
                     fontSize = 12.sp,
                     maxLines = 1,
@@ -142,7 +137,7 @@ fun ServiceCardItem(
                 )
             }
 
-            // 箭头
+            // Arrow
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = null,
@@ -153,7 +148,7 @@ fun ServiceCardItem(
             )
         }
 
-        // 进度条
+        // Progress bar
         if (showProgress) {
             CardProgressBar(
                 duration = progressDuration,
@@ -167,7 +162,7 @@ fun ServiceCardItem(
 }
 
 /**
- * 卡片进度条
+ * Animated progress bar for carousel timing
  */
 @Composable
 private fun CardProgressBar(
