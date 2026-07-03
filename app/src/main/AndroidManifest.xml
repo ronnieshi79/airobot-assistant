@@ -12,9 +12,11 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     
-    <!-- 存储权限 -->
+    <!-- 存储及媒体读取权限（AI播客DIY卡片需要） -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     
     <!-- 蓝牙权限（用于蓝牙耳机） -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
