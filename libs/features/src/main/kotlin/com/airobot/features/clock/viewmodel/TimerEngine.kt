@@ -11,7 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.airobot.features.aiserv.event.AiEvent
 import com.airobot.features.aiserv.event.AiEventDispatcher
-import com.airobot.features.aiserv.popup.OverlayTags
+import com.airobot.features.FeatureCards
 import com.airobot.features.aiserv.popup.TopAlertCoordinator
 import com.airobot.features.clock.data.model.toAiCategory
 import com.airobot.features.aiserv.popup.PopupQueueService
@@ -240,7 +240,7 @@ class TimerEngine @Inject constructor(
     ) : PopupServiceItem() {
         override val id: String = "timer_${data.id}"
         override val serviceType: String =
-            if (data.isFocusMode) OverlayTags.FOCUS else OverlayTags.TIMER
+            if (data.isFocusMode) FeatureCards.FOCUS else FeatureCards.TIMER
         override val displayName: String = data.label.take(4)
         override val priority: Int = if (data.isForeground) 80 else 50
         override val timeoutDurationMs: Long = data.timeoutDurationMs

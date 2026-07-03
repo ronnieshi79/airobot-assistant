@@ -3,11 +3,15 @@ package com.airobot.features.clock.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.airobot.features.aiserv.guidance.RemindEngine
+import com.airobot.features.aiserv.guidance.data.RemindCard
+import com.airobot.features.FeatureCards
 import com.airobot.features.clock.data.model.AlarmItem
 import com.airobot.features.clock.data.model.HourlyChimeConfig
 import com.airobot.features.clock.data.model.PresetItem
 import com.airobot.features.clock.data.model.TimerMode
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
@@ -24,8 +28,14 @@ import javax.inject.Inject
 class ClockViewModel @Inject constructor(
     private val alarmDelegate: AlarmDelegate,
     private val timerEngine: TimerEngine,
-    private val hourlyChimeManager: HourlyChimeManager
+    private val hourlyChimeManager: HourlyChimeManager,
+    private val remindEngine: RemindEngine
 ) : ViewModel() {
+
+    /** Clock-specific remind cards filtered by clock-related overlay tags. */
+    val remindCards: Flow<List<RemindCard>> = remindEngine.getRemindCards(
+        listOf(FeatureCards.ALARM, FeatureCards.TIMER, FeatureCards.FOCUS, FeatureCards.LOGBOOK)
+    )
 
     companion object {
         private const val TAG = "ClockViewModel"

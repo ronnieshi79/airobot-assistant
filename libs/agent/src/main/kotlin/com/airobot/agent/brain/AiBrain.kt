@@ -23,4 +23,7 @@ interface AiBrain {
 
     fun wakeUp()
     fun sleep()
+
+    fun setSpeechInterruptionEnabled(enabled: Boolean)
+    fun isSpeechInterruptionEnabled(): Boolean
 }

@@ -1,17 +1,18 @@
 package com.airobot.features.aiserv.guidance
 
+import com.airobot.features.FeatureCards
+import com.airobot.features.FeatureCardType
 import com.airobot.features.aiserv.guidance.data.CardUsageRecord
 import com.airobot.features.aiserv.guidance.data.CardUsageStore
-import com.airobot.features.aiserv.guidance.data.RecommendedCard
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class RecommendationEngine @Inject constructor(
-    private val cardRegistry: CardRegistry,
+class CardRankingEngine @Inject constructor(
     private val usageStore: CardUsageStore
 ) {
     private val _supportedTags = MutableStateFlow<List<String>>(emptyList())
@@ -21,11 +22,20 @@ class RecommendationEngine @Inject constructor(
         _supportedTags.value = tags
     }
 
-    fun getRecommendedCards(): Flow<List<RecommendedCard>> = combine(_supportedTags, _updateTrigger) { tags, _ ->
-        val records = usageStore.getAllRecords(tags)
-        val cards = cardRegistry.getCards(tags)
+    /** App-level query: returns tags filtered by the globally configured supported tags. */
+    fun getRankedTags(): Flow<List<String>> = combine(_supportedTags, _updateTrigger) { tags, _ ->
+        getRankedTagsInternal(tags)
+    }
 
-        // Calculate median usage
+    /** Module-level query: returns tags filtered by the given tag subset. */
+    fun getRankedTags(tags: List<String>): Flow<List<String>> = _updateTrigger.map {
+        getRankedTagsInternal(tags)
+    }
+
+    private fun getRankedTagsInternal(tags: List<String>): List<String> {
+        val records = usageStore.getAllRecords(tags)
+
+        // Calculate median usage within this subset
         val usageCounts = records.values.map { it.usageCount }.sorted()
         val medianUsage = if (usageCounts.isNotEmpty()) {
             usageCounts[usageCounts.size / 2]
@@ -35,18 +45,28 @@ class RecommendationEngine @Inject constructor(
 
         val now = System.currentTimeMillis()
 
-        cards.sortedWith { a, b ->
-            val scoreA = computeScore(a, records[a.overlayTag] ?: CardUsageRecord(), medianUsage, now)
-            val scoreB = computeScore(b, records[b.overlayTag] ?: CardUsageRecord(), medianUsage, now)
+        val sortedTags = tags.sortedWith { tagA, tagB ->
+            val scoreA = computeScore(tagA, records[tagA] ?: CardUsageRecord(), medianUsage, now)
+            val scoreB = computeScore(tagB, records[tagB] ?: CardUsageRecord(), medianUsage, now)
 
             val p = scoreB.compareTo(scoreA) // descending by score
             if (p != 0) p
-            else a.overlayTag.compareTo(b.overlayTag) // stable fallback
+            else tagA.compareTo(tagB) // stable fallback
         }
+
+        return sortedTags
     }
 
-    private fun computeScore(card: RecommendedCard, record: CardUsageRecord, medianUsage: Int, now: Long): Int {
-        var score = card.basePriority
+    private fun computeScore(tag: String, record: CardUsageRecord, medianUsage: Int, now: Long): Int {
+        val cardMeta = FeatureCards.get(tag)
+        var score = cardMeta?.basePriority ?: 50
+
+        if (cardMeta != null) {
+            when (cardMeta.type) {
+                FeatureCardType.POPUP -> score += 10
+                FeatureCardType.STATIC -> score -= 5
+            }
+        }
 
         if (record.hasNewContent) {
             score += 30
@@ -68,7 +88,7 @@ class RecommendationEngine @Inject constructor(
         usageStore.saveUsageRecord(tag, current.copy(
             usageCount = current.usageCount + 1,
             lastUsedTimestamp = System.currentTimeMillis(),
-            hasNewContent = false // Reset new content when used
+            hasNewContent = false
         ))
         _updateTrigger.value = _updateTrigger.value + 1
     }

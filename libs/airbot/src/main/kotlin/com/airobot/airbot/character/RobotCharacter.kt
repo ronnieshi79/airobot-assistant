@@ -81,7 +81,7 @@ fun RobotCharacter(
                         RiveCharacter(
                             state = state,
                             roleName = roleName,
-                            audioLevel = audioLevel,
+                            audioLevel = if (state == RobotVisualState.SPEAKING) audioLevel else { { 0f } },
                             modifier = Modifier
                                 .fillMaxSize()
                                 .graphicsLayer {

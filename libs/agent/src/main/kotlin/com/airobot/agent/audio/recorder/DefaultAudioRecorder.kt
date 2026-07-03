@@ -9,8 +9,9 @@ import android.media.MediaRecorder
 import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
-import com.airobot.agent.AudioConfig
-import com.airobot.agent.AudioEvent
+import com.airobot.agent.audio.AudioConfig
+import com.airobot.agent.audio.AudioEvent
+import com.airobot.agent.audio.AudioWorkState
 import com.airobot.agent.audio.tools.afe.AfeManager
 import com.airobot.agent.audio.tools.kws.KwsManager
 import kotlinx.coroutines.CoroutineScope
@@ -166,7 +167,7 @@ class DefaultAudioRecorder(
 
     override fun isRecording(): Boolean = isRunning
 
-    override fun setWorkState(state: com.airobot.agent.AudioWorkState) {
+    override fun setWorkState(state: AudioWorkState) {
         pipeline?.setWorkState(state)
     }
 

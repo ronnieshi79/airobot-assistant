@@ -22,16 +22,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.airobot.framework.R
-import com.airobot.features.aiserv.guidance.data.RecommendedCard
+import com.airobot.features.aiserv.guidance.data.RecommendCard
 import com.airobot.framework.theme.RobotTheme
 
 /**
- * ServiceCardItem — Renders an individual recommended service card.
+ * CardRecommendationItem — Renders an individual recommended service card.
  * Decoupled from App module and fully localized.
  */
 @Composable
-fun ServiceCardItem(
-    card: RecommendedCard,
+fun CardRecommendationItem(
+    card: RecommendCard,
     onClick: () -> Unit,
     showProgress: Boolean = true,
     progressDuration: Int = 10000,

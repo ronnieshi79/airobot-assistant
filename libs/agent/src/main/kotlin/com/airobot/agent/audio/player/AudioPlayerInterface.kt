@@ -1,8 +1,7 @@
 package com.airobot.agent.audio.player
 
-import android.content.Context
 import kotlinx.coroutines.flow.SharedFlow
-import com.airobot.agent.AudioConfig
+import com.airobot.agent.audio.AudioConfig
 
 /**
  * Audio player interface.

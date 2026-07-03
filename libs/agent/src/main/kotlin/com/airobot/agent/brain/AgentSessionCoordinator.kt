@@ -1,7 +1,7 @@
 package com.airobot.agent.brain
 
 import android.util.Log
-import com.airobot.agent.AudioService
+import com.airobot.agent.audio.AudioService
 import com.airobot.agent.skills.podcast.PodcastProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

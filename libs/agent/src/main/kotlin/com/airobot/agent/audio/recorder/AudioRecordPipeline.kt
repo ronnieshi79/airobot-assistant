@@ -2,9 +2,9 @@ package com.airobot.agent.audio.recorder
 
 import android.content.Context
 import android.util.Log
-import com.airobot.agent.AudioConfig
-import com.airobot.agent.AudioEvent
-import com.airobot.agent.AudioWorkState
+import com.airobot.agent.audio.AudioConfig
+import com.airobot.agent.audio.AudioEvent
+import com.airobot.agent.audio.AudioWorkState
 import com.airobot.agent.audio.recorder.pipeline.AudioAfeNode
 import com.airobot.agent.audio.recorder.pipeline.AudioEncoderNode
 import com.airobot.agent.audio.recorder.pipeline.AudioKwsNode
@@ -46,6 +46,7 @@ class AudioRecordPipeline(
 
     // State management
     private val stateLock = Any()
+
     @Volatile
     private var currentState = AudioWorkState.WAITING
 
@@ -65,10 +66,10 @@ class AudioRecordPipeline(
 
     private fun startPipeline() {
         Log.d(TAG, "Starting Audio Pipeline (Actor Node Router)...")
-        
+
         // 1. Start Encoder Node (Sink)
         encoderNode.start(scope)
-        
+
         // 2. Start KWS Node (Detector Branch)
         kwsNode.start(scope) { triggerMessages ->
             // Check state again to prevent late races
@@ -80,7 +81,7 @@ class AudioRecordPipeline(
                 }
             }
         }
-        
+
         // 3. Start AFE Node (Source Router)
         afeNode.start(scope) { afeResult ->
             if (currentState == AudioWorkState.ACTIVE) {

@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.airobot.features.R
-import com.airobot.features.aiserv.popup.OverlayTags
+import com.airobot.features.FeatureCards
 import com.airobot.features.aiserv.viewmodel.PopupQueueViewModel
 import com.airobot.features.clock.cards.AlarmCard
 import com.airobot.features.clock.cards.ClockHomeCard
@@ -20,7 +20,8 @@ fun ClockHomeRoute(
     modifier: Modifier = Modifier,
     clockViewModel: ClockViewModel = hiltViewModel(),
     popupQueueViewModel: PopupQueueViewModel = hiltViewModel(),
-    onShowOverlay: (String) -> Unit
+    onShowOverlay: (String) -> Unit,
+    onNavigateToAlarm: () -> Unit = {}
 ) {
     val alarms by clockViewModel.alarms.collectAsState()
     val queueItems by popupQueueViewModel.queue.collectAsState()
@@ -32,16 +33,19 @@ fun ClockHomeRoute(
             val targetAlarm = alarms.firstOrNull { it.enabled } ?: alarms.firstOrNull()
             clockViewModel.setSelectedAlarmId(targetAlarm?.id)
             clockViewModel.clearAlarmBackgrounded()
-            onShowOverlay(OverlayTags.ALARM)
+            onShowOverlay(FeatureCards.ALARM)
         },
-        onFocusClick = { onShowOverlay(OverlayTags.TIMER) },
-        onTimerClick = { onShowOverlay(OverlayTags.TIMER) },
-        onChimeClick = { onShowOverlay(OverlayTags.HOURLY_CHIME) },
+        onFocusClick = { onShowOverlay(FeatureCards.TIMER) },
+        onTimerClick = { onShowOverlay(FeatureCards.TIMER) },
+        onChimeClick = { onShowOverlay(FeatureCards.HOURLY_CHIME) },
         onRemindClick = { action ->
             when (action) {
-                "focus" -> onShowOverlay(OverlayTags.TIMER)
-                "logbook" -> onShowOverlay(OverlayTags.LOGBOOK)
-                "timer" -> onShowOverlay(OverlayTags.TIMER)
+                "alarm" -> onShowOverlay(FeatureCards.ALARM)
+                "clock_alarm" -> onNavigateToAlarm()
+                "focus" -> onShowOverlay(FeatureCards.TIMER)
+                "logbook" -> onShowOverlay(FeatureCards.LOGBOOK)
+                "timer" -> onShowOverlay(FeatureCards.TIMER)
+                else -> onShowOverlay(action)
             }
         }
     )
@@ -63,7 +67,7 @@ fun AlarmRoute(
         onItemClick = { alarm ->
             clockViewModel.setSelectedAlarmId(alarm.id)
             clockViewModel.clearAlarmBackgrounded()
-            onShowOverlay(OverlayTags.ALARM)
+            onShowOverlay(FeatureCards.ALARM)
         }
     )
 }
@@ -86,13 +90,13 @@ fun TimerRoute(
             val startResult = clockViewModel.startTimerSession(preset)
             when (startResult) {
                 TimerStartResult.STARTED -> {
-                    onShowOverlay(OverlayTags.TIMER)
+                    onShowOverlay(FeatureCards.TIMER)
                 }
 
                 TimerStartResult.DUPLICATE_PRESET -> {
                     clockViewModel.bringTimerToForeground(preset.id)
                     onShowAlert(context.resources.getString(R.string.timer_blocked_duplicate_preset))
-                    onShowOverlay(OverlayTags.TIMER)
+                    onShowOverlay(FeatureCards.TIMER)
                 }
 
                 TimerStartResult.FOCUS_ACTIVE -> {

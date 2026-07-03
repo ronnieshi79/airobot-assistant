@@ -3,12 +3,16 @@ package com.airobot.features.podcast.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.airobot.features.aiserv.guidance.RemindEngine
+import com.airobot.features.aiserv.guidance.data.RemindCard
+import com.airobot.features.FeatureCards
 import com.airobot.features.podcast.cards.creator.ScannedFile
 import com.airobot.features.podcast.data.model.PodcastEpisode
 import com.airobot.features.podcast.data.model.PodcastSubscription
 import com.airobot.features.podcast.service.PlaybackState
 import androidx.media3.common.Player
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
@@ -22,8 +26,14 @@ class PodcastViewModel @Inject constructor(
     private val dataDelegate: PodcastDataDelegate,
     private val playbackDelegate: PodcastPlaybackDelegate,
     private val creationDelegate: PodcastCreationDelegate,
-    private val recommendationEngine: PodcastRecommendationEngine
+    private val recommendationEngine: PodcastRecommendationEngine,
+    private val remindEngine: RemindEngine
 ) : ViewModel() {
+
+    /** Podcast-specific remind cards filtered by podcast-related overlay tags. */
+    val remindCards: Flow<List<RemindCard>> = remindEngine.getRemindCards(
+        listOf(FeatureCards.PODCAST, FeatureCards.DIY_PODCAST, FeatureCards.LOGBOOK)
+    )
 
     companion object {
         private const val TAG = "PodcastViewModel"

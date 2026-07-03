@@ -21,11 +21,11 @@ fun BottomFooter(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "·  A E T H E R   C O M P A N I O N  ·",
+            text = "·  A I R B O T   C O M M  ·",
             color = RobotTheme.colors.textPrimary.copy(alpha = 0.25f), // 极低透明度，匹配原型
             fontSize = 9.sp,
             fontWeight = FontWeight.Bold,
-            letterSpacing = 4.sp
+            letterSpacing = 2.5.sp
         )
     }
 }

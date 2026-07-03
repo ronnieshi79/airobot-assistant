@@ -1,12 +1,12 @@
 package com.airobot.assistant.assembly
 
-import com.airobot.features.aiserv.popup.OverlayTags
+import com.airobot.features.FeatureCards
 
 /**
  * Supported overlay cards for the Assistant app
  */
 val APP_SUPPORTED_OVERLAYS = listOf(
-    OverlayTags.PODCAST,
-    OverlayTags.DIY_PODCAST,
-    OverlayTags.LOGBOOK
+    FeatureCards.PODCAST,
+    FeatureCards.DIY_PODCAST,
+    FeatureCards.LOGBOOK
 )

@@ -1,12 +1,80 @@
 package com.airobot.features
 
 import com.airobot.features.aiserv.notepad.AiNotepadProcessor
-import com.airobot.features.aiserv.guidance.CardRegistry
-import com.airobot.features.aiserv.guidance.RecommendationEngine
-import com.airobot.features.aiserv.guidance.data.RecommendedCard
-import com.airobot.features.aiserv.popup.OverlayTags
+import com.airobot.features.aiserv.guidance.CardRankingEngine
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/**
+ * FeatureCardType — Categorizes cards into popups (overlays) or static cards.
+ */
+enum class FeatureCardType {
+    POPUP,   // 功能弹出服务卡片
+    STATIC   // 功能模块静态卡片
+}
+
+/**
+ * FeatureCard — Common data class defining a card's basic parameters.
+ */
+data class FeatureCard(
+    val tag: String,
+    val type: FeatureCardType,
+    val basePriority: Int
+)
+
+/**
+ * FeatureCards — Unified single source of truth for all cards in the features module.
+ */
+object FeatureCards {
+    // Popup Service Cards
+    const val ALARM = "ALARM"
+    const val TIMER = "TIMER"
+    const val FOCUS = "FOCUS"
+    const val HOURLY_CHIME = "HOURLY_CHIME"
+    const val CHIME = "CHIME"
+    const val PODCAST = "PODCAST"
+    const val DIY_PODCAST = "DIY_PODCAST"
+    const val SCHEDULE_PLANNER = "SCHEDULE_PLANNER"
+    const val LOGBOOK = "LOGBOOK"
+
+    // Static Module Cards
+    const val CLOCK_HOME = "CLOCK_HOME"
+    const val CLOCK_ALARM = "CLOCK_ALARM"
+    const val CLOCK_TIMER = "CLOCK_TIMER"
+    const val SCHEDULE_HOME = "SCHEDULE_HOME"
+    const val SCHEDULE_BOARD = "SCHEDULE_BOARD"
+    const val SCHEDULE_LIST = "SCHEDULE_LIST"
+    const val PODCAST_HOME = "PODCAST_HOME"
+    const val PODCAST_LIBRARY = "PODCAST_LIBRARY"
+    const val PODCAST_SUBSCRIBE = "PODCAST_SUBSCRIBE"
+
+    private val allCards = listOf(
+        FeatureCard(ALARM, FeatureCardType.POPUP, 75),
+        FeatureCard(TIMER, FeatureCardType.POPUP, 65),
+        FeatureCard(FOCUS, FeatureCardType.POPUP, 65),
+        FeatureCard(HOURLY_CHIME, FeatureCardType.POPUP, 50),
+        FeatureCard(CHIME, FeatureCardType.POPUP, 50),
+        FeatureCard(PODCAST, FeatureCardType.POPUP, 70),
+        FeatureCard(DIY_PODCAST, FeatureCardType.POPUP, 60),
+        FeatureCard(SCHEDULE_PLANNER, FeatureCardType.POPUP, 65),
+        FeatureCard(LOGBOOK, FeatureCardType.POPUP, 65),
+
+        FeatureCard(CLOCK_HOME, FeatureCardType.STATIC, 80),
+        FeatureCard(CLOCK_ALARM, FeatureCardType.STATIC, 75),
+        FeatureCard(CLOCK_TIMER, FeatureCardType.STATIC, 65),
+        FeatureCard(SCHEDULE_HOME, FeatureCardType.STATIC, 70),
+        FeatureCard(SCHEDULE_BOARD, FeatureCardType.STATIC, 60),
+        FeatureCard(SCHEDULE_LIST, FeatureCardType.STATIC, 65),
+        FeatureCard(PODCAST_HOME, FeatureCardType.STATIC, 68),
+        FeatureCard(PODCAST_LIBRARY, FeatureCardType.STATIC, 58),
+        FeatureCard(PODCAST_SUBSCRIBE, FeatureCardType.STATIC, 52)
+    )
+
+    private val cardMap = allCards.associateBy { it.tag }
+
+    fun getAll(): List<FeatureCard> = allCards
+    fun get(tag: String): FeatureCard? = cardMap[tag]
+}
 
 /**
  * FeaturesModule — Unified entry point for eagerly initializing background
@@ -15,8 +83,7 @@ import javax.inject.Singleton
 @Singleton
 class FeaturesModule @Inject constructor(
     private val aiNotepadProcessor: AiNotepadProcessor,
-    private val cardRegistry: CardRegistry,
-    private val recommendationEngine: RecommendationEngine
+    private val cardRankingEngine: CardRankingEngine
 ) {
     /**
      * Backward-compatible initialize method.
@@ -30,87 +97,6 @@ class FeaturesModule @Inject constructor(
      */
     fun initialize(supportedCardTags: List<String>) {
         aiNotepadProcessor.start()
-        registerDefaultCards()
-        recommendationEngine.setSupportedTags(supportedCardTags)
-    }
-
-    private fun registerDefaultCards() {
-        // Podcast Overlays
-        cardRegistry.register(
-            RecommendedCard(
-                overlayTag = OverlayTags.PODCAST,
-                titleResId = R.string.card_podcast_title,
-                contentResId = R.string.card_podcast_content,
-                statusTipResId = R.string.card_podcast_tip,
-                iconResId = com.airobot.framework.R.drawable.music,
-                basePriority = 60
-            )
-        )
-        cardRegistry.register(
-            RecommendedCard(
-                overlayTag = OverlayTags.DIY_PODCAST,
-                titleResId = R.string.card_podcast_diy_title,
-                contentResId = R.string.card_podcast_diy_content,
-                statusTipResId = R.string.card_podcast_diy_tip,
-                iconResId = com.airobot.framework.R.drawable.palette,
-                basePriority = 50
-            )
-        )
-
-        // AiServ / Notepad Overlays
-        cardRegistry.register(
-            RecommendedCard(
-                overlayTag = OverlayTags.LOGBOOK,
-                titleResId = R.string.card_notepad_title,
-                contentResId = R.string.card_notepad_content,
-                statusTipResId = R.string.card_notepad_tip,
-                iconResId = com.airobot.framework.R.drawable.book,
-                basePriority = 40
-            )
-        )
-
-        // Clock Overlays
-        cardRegistry.register(
-            RecommendedCard(
-                overlayTag = OverlayTags.ALARM,
-                titleResId = R.string.card_alarm_title,
-                contentResId = R.string.card_alarm_content,
-                statusTipResId = R.string.card_alarm_tip,
-                iconResId = com.airobot.framework.R.drawable.alarm,
-                basePriority = 70
-            )
-        )
-        cardRegistry.register(
-            RecommendedCard(
-                overlayTag = OverlayTags.TIMER,
-                titleResId = R.string.card_timer_title,
-                contentResId = R.string.card_timer_content,
-                statusTipResId = R.string.card_timer_tip,
-                iconResId = com.airobot.framework.R.drawable.timer,
-                basePriority = 55
-            )
-        )
-        cardRegistry.register(
-            RecommendedCard(
-                overlayTag = OverlayTags.FOCUS,
-                titleResId = R.string.card_focus_title_rec,
-                contentResId = R.string.card_focus_content_rec,
-                statusTipResId = R.string.card_focus_tip_rec,
-                iconResId = com.airobot.framework.R.drawable.timer, // uses timer icon
-                basePriority = 65
-            )
-        )
-
-        // Schedule Overlays
-        cardRegistry.register(
-            RecommendedCard(
-                overlayTag = OverlayTags.SCHEDULE_PLANNER,
-                titleResId = R.string.card_schedule_title,
-                contentResId = R.string.card_schedule_content,
-                statusTipResId = R.string.card_schedule_tip,
-                iconResId = com.airobot.framework.R.drawable.book, // uses book icon
-                basePriority = 45
-            )
-        )
+        cardRankingEngine.setSupportedTags(supportedCardTags)
     }
 }

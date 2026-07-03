@@ -12,17 +12,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.airobot.features.aiserv.guidance.data.RecommendedCard
+import com.airobot.features.aiserv.guidance.data.RecommendCard
 import com.airobot.framework.theme.RobotTheme
 
 /**
- * ServiceCardCarousel — Auto-rotating carousel of recommended cards.
+ * CardRecommendationCarousel — Auto-rotating carousel of recommended cards.
  * Decoupled from App module.
  */
 @Composable
-fun ServiceCardCarousel(
-    cards: List<RecommendedCard>,
-    onCardClick: (RecommendedCard) -> Unit,
+fun CardRecommendationCarousel(
+    cards: List<RecommendCard>,
+    onCardClick: (RecommendCard) -> Unit,
     currentIndex: Int,
     onPageChanged: (Int) -> Unit,
     statusTip: String? = null,
@@ -53,7 +53,7 @@ fun ServiceCardCarousel(
                 label = "cardCarousel"
             ) { index ->
                 val card = cards.getOrNull(index) ?: cards.first()
-                ServiceCardItem(
+                CardRecommendationItem(
                     card = card,
                     onClick = { onCardClick(card) },
                     modifier = Modifier.fillMaxWidth()
@@ -92,12 +92,12 @@ private fun StatusTipHeader(
 }
 
 /**
- * ServiceCardList — Simple static list of recommended cards (no rotation)
+ * CardRecommendationList — Simple static list of recommended cards (no rotation)
  */
 @Composable
-fun ServiceCardList(
-    cards: List<RecommendedCard>,
-    onCardClick: (RecommendedCard) -> Unit,
+fun CardRecommendationList(
+    cards: List<RecommendCard>,
+    onCardClick: (RecommendCard) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -105,7 +105,7 @@ fun ServiceCardList(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         cards.forEach { card ->
-            ServiceCardItem(
+            CardRecommendationItem(
                 card = card,
                 onClick = { onCardClick(card) },
                 showProgress = false

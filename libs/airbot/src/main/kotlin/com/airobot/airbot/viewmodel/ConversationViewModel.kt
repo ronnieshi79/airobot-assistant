@@ -4,8 +4,8 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.airobot.agent.AudioEvent
-import com.airobot.agent.AudioService
+import com.airobot.agent.audio.AudioEvent
+import com.airobot.agent.audio.AudioService
 import com.airobot.agent.brain.AiBrain
 import com.airobot.airbot.R
 import com.airobot.airbot.api.AirbotEngineApi
@@ -47,6 +47,7 @@ class ConversationViewModel @Inject constructor(
 
     private var isAutoMode = false    // Continuous Conversation Mode
     private var isActive = false
+    private var isTransitioningAfterTtsStop = false
     private val _subState = MutableStateFlow(ConversationSubState.LISTENING)
     private val _isMuted = MutableStateFlow(false)
 
@@ -138,6 +139,10 @@ class ConversationViewModel @Inject constructor(
             is AudioEvent.VoiceLevel -> _audioLevel.value = event.level
             is AudioEvent.SpeechStart -> {
                 Log.d(TAG, "SpeechStart received, subState=${_subState.value}")
+                if (isTransitioningAfterTtsStop) {
+                    Log.d(TAG, "SpeechStart ignored: transitioning after TTS stop (preventing echo leakage)")
+                    return
+                }
                 // If the user starts speaking while the robot is speaking, treat it as an interruption
                 if (_subState.value == ConversationSubState.SPEAKING) {
                     Log.d(TAG, "User started speaking while AI is speaking, interrupting...")
@@ -239,11 +244,14 @@ class ConversationViewModel @Inject constructor(
             return
         }
 
+        isTransitioningAfterTtsStop = true
+
         viewModelScope.launch {
             delay(200)
             // Double check state after delay just in case an interruption happened during the delay
             if (_subState.value != ConversationSubState.SPEAKING) {
                 Log.d(TAG, "Ignoring TtsStop transition because subState changed during delay")
+                isTransitioningAfterTtsStop = false
                 return@launch
             }
 
@@ -252,6 +260,7 @@ class ConversationViewModel @Inject constructor(
             } else {
                 cleanConversation()
             }
+            isTransitioningAfterTtsStop = false
         }
     }
 

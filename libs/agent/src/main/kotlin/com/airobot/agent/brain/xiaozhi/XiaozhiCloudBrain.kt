@@ -1,6 +1,7 @@
 package com.airobot.agent.brain.xiaozhi
 
 import android.util.Log
+import com.airobot.agent.audio.AudioService
 import com.airobot.agent.brain.AiBrain
 import com.airobot.agent.brain.BrainState
 import com.airobot.agent.skills.SkillManager
@@ -29,6 +30,7 @@ import javax.inject.Singleton
 class XiaozhiCloudBrain @Inject constructor(
     private val netCommService: NetCommService,
     private val skillManager: SkillManager,
+    private val audioService: AudioService,
     private val gson: Gson
 ) : AiBrain {
 
@@ -41,6 +43,8 @@ class XiaozhiCloudBrain @Inject constructor(
 
     private val _brainState = MutableStateFlow(BrainState.IDLE)
     override val brainState: StateFlow<BrainState> = _brainState.asStateFlow()
+
+    private var isSpeechInterruptionEnabled = false
 
     init {
         scope.launch {
@@ -76,8 +80,20 @@ class XiaozhiCloudBrain @Inject constructor(
                 "tts" -> {
                     val state = json.get("state")?.asString
                     when (state) {
-                        "start" -> _brainState.value = BrainState.SPEAKING
-                        "stop" -> _brainState.value = BrainState.IDLE
+                        "start" -> {
+                            _brainState.value = BrainState.SPEAKING
+                            if (!isSpeechInterruptionEnabled) {
+                                Log.d(
+                                    TAG,
+                                    "Speech Interruption disabled (Half-Duplex): Deactivating audio during TTS playback"
+                                )
+                                audioService.deactivate()
+                            }
+                        }
+
+                        "stop" -> {
+                            _brainState.value = BrainState.IDLE
+                        }
                     }
                 }
 
@@ -239,4 +255,11 @@ class XiaozhiCloudBrain @Inject constructor(
         netCommService.stopListening()
         Log.d(TAG, "sleep: switched to IDLE")
     }
+
+    override fun setSpeechInterruptionEnabled(enabled: Boolean) {
+        isSpeechInterruptionEnabled = enabled
+        Log.d(TAG, "setSpeechInterruptionEnabled: $enabled")
+    }
+
+    override fun isSpeechInterruptionEnabled(): Boolean = isSpeechInterruptionEnabled
 }

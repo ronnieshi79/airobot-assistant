@@ -22,12 +22,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Cloud
-import androidx.compose.material.icons.outlined.NoteAlt
-import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -36,12 +35,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.airobot.features.FeatureCards
 import com.airobot.features.aiserv.guidance.components.AetherRemindBanner
-import com.airobot.features.aiserv.guidance.components.RemindPage
 import com.airobot.features.schedule.data.ScheduleUtils
 import com.airobot.features.schedule.viewmodel.ScheduleViewModel
 // Removed SubCategory import
@@ -108,29 +108,17 @@ fun ScheduleHomeCard(
         time.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, java.util.Locale.CHINESE)
             ?: "星期二"
     val dayOfMonth = time.get(Calendar.DAY_OF_MONTH)
+    val context = LocalContext.current
+
+    val remindCards by scheduleViewModel.remindCards.collectAsState(initial = emptyList())
 
     // Aether Banner Pages
-    val remindPages = remember(combinedItems, todayInfo) {
-        listOf(
-            RemindPage(
-                title = "今日规划",
-                content = "今天是 ${time.get(Calendar.MONTH) + 1}月${dayOfMonth}日。天气${todayInfo.weatherCondition}，气温${todayInfo.weatherTemp}；今日共有 ${combinedItems.size} 项事务安排，Aether建议您挑重点优先处理。",
-                actionTarget = "schedule",
-                icon = Icons.Outlined.CalendarMonth
-            ),
-            RemindPage(
-                title = "成长足迹",
-                content = "AETHER 已根据您的日程与任务完成情况，自动记录并生成了今日成果报告。点击查看 [ai记事本] 吧。",
-                actionTarget = "logbook",
-                icon = Icons.Outlined.NoteAlt
-            ),
-            RemindPage(
-                title = "专注学习",
-                content = "日程之间穿插深度学习？使用 [ai专注] 帮助您心无旁骛、高效专注当下一刻。",
-                actionTarget = "focus",
-                icon = Icons.Outlined.Psychology
-            )
-        )
+    val mappedRemindCards = remindCards.map { card ->
+        if (card.tag == FeatureCards.SCHEDULE_PLANNER) {
+            card.copy(content = "今天是 ${time.get(Calendar.MONTH) + 1}月${dayOfMonth}日。天气${todayInfo.weatherCondition}，气温${todayInfo.weatherTemp}；今日共有 ${combinedItems.size} 项事务安排，Aether建议您挑重点优先处理。")
+        } else {
+            card
+        }
     }
 
     Column(
@@ -498,7 +486,7 @@ fun ScheduleHomeCard(
 
         // Bottom recommendation banner
         AetherRemindBanner(
-            pages = remindPages,
+            pages = mappedRemindCards,
             cardIcon = Icons.Outlined.CalendarMonth,
             accentColor = ScheduleDateBg,
             onPageClick = { page ->

@@ -5,8 +5,8 @@ import com.airobot.features.aiserv.popup.AlertType
 import com.airobot.features.aiserv.popup.OverlayCoordinator
 import com.airobot.features.aiserv.popup.TopAlertCoordinator
 import com.airobot.features.aiserv.popup.TopAlertState
-import com.airobot.features.aiserv.guidance.RecommendationEngine
-import com.airobot.features.aiserv.guidance.data.RecommendedCard
+import com.airobot.features.aiserv.guidance.CardRecommendEngine
+import com.airobot.features.aiserv.guidance.data.RecommendCard
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +19,7 @@ import javax.inject.Inject
 class OverlayViewModel @Inject constructor(
     private val overlayCoordinator: OverlayCoordinator,
     private val topAlertCoordinator: TopAlertCoordinator,
-    private val recommendationEngine: RecommendationEngine
+    private val cardRecommendEngine: CardRecommendEngine
 ) : ViewModel() {
     val activeOverlay: StateFlow<String> = overlayCoordinator.activeOverlay
     val topAlert: StateFlow<TopAlertState> = topAlertCoordinator.state
@@ -31,13 +31,13 @@ class OverlayViewModel @Inject constructor(
     fun hideOverlay() {
         val currentTag = activeOverlay.value
         if (currentTag.isNotEmpty()) {
-            recommendationEngine.recordUsage(currentTag)
+            cardRecommendEngine.recordUsage(currentTag)
         }
         overlayCoordinator.hideOverlay()
     }
 
-    fun getRecommendedCards(): Flow<List<RecommendedCard>> {
-        return recommendationEngine.getRecommendedCards()
+    fun getRecommendCards(): Flow<List<RecommendCard>> {
+        return cardRecommendEngine.getRecommendCards()
     }
 
     /**

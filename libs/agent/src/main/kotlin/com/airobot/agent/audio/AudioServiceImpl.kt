@@ -3,10 +3,6 @@ package com.airobot.agent.audio
 import android.content.Context
 import android.util.Log
 import androidx.annotation.RequiresPermission
-import com.airobot.agent.AudioConfig
-import com.airobot.agent.AudioEvent
-import com.airobot.agent.AudioService
-import com.airobot.agent.AudioWorkState
 import com.airobot.agent.audio.player.AudioPlayer
 import com.airobot.agent.audio.player.DefaultAudioPlayer
 import com.airobot.agent.audio.recorder.AudioRecorder
@@ -47,7 +43,8 @@ class AudioServiceImpl @Inject constructor(
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+    private val audioManager =
+        context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
 
     // Core Components
     private val audioRecorder: AudioRecorder = DefaultAudioRecorder(context, kwsManager, afeManager)
@@ -161,14 +158,14 @@ class AudioServiceImpl @Inject constructor(
         audioRecorder.cleanup()
         audioPlayer.cleanup()
         scope.cancel()
-        
+
         try {
             audioManager.mode = android.media.AudioManager.MODE_NORMAL
             Log.d(TAG, "Reset AudioManager mode to MODE_NORMAL on release")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to reset AudioManager mode", e)
         }
-        
+
         Log.d(TAG, "Audio system fully released")
     }
 }

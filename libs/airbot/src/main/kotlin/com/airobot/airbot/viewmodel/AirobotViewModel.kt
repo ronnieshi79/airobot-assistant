@@ -2,8 +2,8 @@ package com.airobot.airbot.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.airobot.agent.AudioEvent
-import com.airobot.agent.AudioService
+import com.airobot.agent.audio.AudioEvent
+import com.airobot.agent.audio.AudioService
 import com.airobot.airbot.api.AirbotCharacterApi
 import com.airobot.airbot.api.AirbotEngineApi
 import com.airobot.airbot.domain.model.AirbotServiceSubState
