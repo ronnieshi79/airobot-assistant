@@ -155,6 +155,21 @@ fun AppMainScreen(
         }
     }
 
+    // Observe UI events from MainShellViewModel (e.g., restricted access warnings)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(Unit) {
+        mainShellViewModel.uiEvents.collect { event ->
+            when (event) {
+                is com.airobot.assistant.viewmodel.MainShellUiEvent.ShowAlert -> {
+                    overlayViewModel.showTopAlert(
+                        message = context.getString(event.messageResId),
+                        type = com.airobot.features.aiserv.popup.AlertType.WARNING
+                    )
+                }
+            }
+        }
+    }
+
     // 初始化音频系统 (当权限获得后)
     LaunchedEffect(permissionsState.allPermissionsGranted) {
         if (permissionsState.allPermissionsGranted) {
@@ -184,11 +199,7 @@ fun AppMainScreen(
     val drawerMenuItems = listOf(
         DrawerMenuItemData(Icons.Default.Lock, "系统认证", "系统认证信息") { SystemAuth() },
         DrawerMenuItemData(Icons.Default.Person, "角色管理", "角色管理") {
-            RoleConfig(
-                characters = allCharacters,
-                activeCharacter = activeCharacter,
-                onRoleSelected = { roleName -> mainShellViewModel.updateActiveRole(roleName) }
-            )
+            RoleConfig()
         },
         DrawerMenuItemData(Icons.Default.Settings, "Ai智能体", "Ai智能体配置") { AiRobotConfig() }
     )

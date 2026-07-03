@@ -20,6 +20,7 @@ import com.airobot.airbot.api.AirbotEngineApi
 import com.airobot.airbot.api.AirbotCharacterApi
 import com.airobot.agent.audio.AudioEvent
 import com.airobot.agent.audio.AudioService
+import com.airobot.agent.brain.AiBrain
 
 /**
  * 主外壳控制 ViewModel
@@ -31,7 +32,8 @@ class MainShellViewModel @Inject constructor(
     private val airbotEngineApi: AirbotEngineApi,
     private val airbotCharacterApi: AirbotCharacterApi,
     private val sysManage: SysManage,
-    private val audioService: AudioService
+    private val audioService: AudioService,
+    private val aiBrain: AiBrain
 ) : ViewModel() {
 
     val robotState: StateFlow<RobotState> = airbotEngineApi.robotState
@@ -41,6 +43,12 @@ class MainShellViewModel @Inject constructor(
     val showActivationDialog: StateFlow<Boolean> = _showActivationDialog.asStateFlow()
     private val _activationCode = MutableStateFlow<String?>(null)
     val activationCode: StateFlow<String?> = _activationCode.asStateFlow()
+
+    private val _wakeWordValidationResult = MutableSharedFlow<Boolean>(extraBufferCapacity = 1)
+    val wakeWordValidationResult = _wakeWordValidationResult.asSharedFlow()
+
+    private val _uiEvents = MutableSharedFlow<MainShellUiEvent>(extraBufferCapacity = 16)
+    val uiEvents = _uiEvents.asSharedFlow()
 
     private val _voiceLevel = MutableStateFlow(0f)
     val voiceLevel: StateFlow<Float> = _voiceLevel.asStateFlow()
@@ -255,9 +263,46 @@ class MainShellViewModel @Inject constructor(
         it.activationCode.isNotEmpty() || it.commCredentials != null // sometime ai-agent hasn't activationCode
     }.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
+    fun updateActiveRoleIndex(index: Int) {
+        viewModelScope.launch {
+            val characters = allCharacters.value
+            if (index in characters.indices) {
+                val roleName = characters[index].roleName
+                airbotCharacterApi.switchCharacter(roleName)
+            }
+        }
+    }
+
+    fun updateWakeWord(wakeWord: String) {
+        viewModelScope.launch {
+            val roleName = activeCharacter.value?.roleName ?: return@launch
+            val success = airbotCharacterApi.updateWakeWord(roleName, wakeWord)
+            _wakeWordValidationResult.emit(success)
+            if (!success) {
+                _uiEvents.tryEmit(MainShellUiEvent.ShowAlert(com.airobot.framework.R.string.invalid_wake_word))
+            }
+        }
+    }
+
+    private val _isSpeechInterruptionEnabled =
+        MutableStateFlow(aiBrain.isSpeechInterruptionEnabled())
+    val isSpeechInterruptionEnabled: StateFlow<Boolean> = _isSpeechInterruptionEnabled.asStateFlow()
+
+    fun setSpeechInterruptionEnabled(enabled: Boolean) {
+        aiBrain.setSpeechInterruptionEnabled(enabled)
+        _isSpeechInterruptionEnabled.value = enabled
+    }
+
     override fun onCleared() {
         super.onCleared()
         audioService.release()
         netCommService.disconnect()
     }
+}
+
+/**
+ * UI Event emitted by the MainShellViewModel to trigger side effects in the UI layer.
+ */
+sealed interface MainShellUiEvent {
+    data class ShowAlert(val messageResId: Int) : MainShellUiEvent
 }
