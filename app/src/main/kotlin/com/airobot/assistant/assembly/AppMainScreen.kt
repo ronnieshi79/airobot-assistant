@@ -47,6 +47,9 @@ import com.airobot.framework.theme.StatusEmerald
 import com.airobot.framework.theme.StatusRed
 import com.airobot.features.aiserv.viewmodel.OverlayViewModel
 import com.airobot.framework.util.LanguageMode
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerEventPass
+import com.airobot.features.podcast.viewmodel.PodcastViewModel
 
 /**
  * 机器人服务主屏幕
@@ -61,7 +64,8 @@ fun AppMainScreen(
     onLanguageChange: (LanguageMode) -> Unit = {},
     mainShellViewModel: MainShellViewModel = hiltViewModel(),
     conversationViewModel: ConversationViewModel = hiltViewModel(),
-    overlayViewModel: OverlayViewModel = hiltViewModel()
+    overlayViewModel: OverlayViewModel = hiltViewModel(),
+    podcastViewModel: PodcastViewModel = hiltViewModel()
 ) {
     // 权限管理
     val permissionsState = rememberMultiplePermissionsState(
@@ -92,6 +96,36 @@ fun AppMainScreen(
 
     // 从 OverlayViewModel 收集弹窗状态
     val activeOverlay by overlayViewModel.activeOverlay.collectAsState()
+
+    // 60秒无交互且无音频播放自动退出卡片服务
+    var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    val isPodcastPlaying by podcastViewModel.isPlaying.collectAsState()
+    val isCardActive = activeOverlay.isNotEmpty()
+
+    LaunchedEffect(isPodcastPlaying) {
+        if (isPodcastPlaying) {
+            lastInteractionTime = System.currentTimeMillis()
+        }
+    }
+
+    LaunchedEffect(isCardActive, isPodcastPlaying, lastInteractionTime) {
+        if (isCardActive) {
+            while (true) {
+                if (isPodcastPlaying) {
+                    lastInteractionTime = System.currentTimeMillis()
+                }
+                val now = System.currentTimeMillis()
+                val elapsed = now - lastInteractionTime
+                val remaining = 60000L - elapsed
+                if (remaining <= 0) {
+                    overlayViewModel.hideOverlay()
+                    conversationViewModel.interrupt()
+                    break
+                }
+                delay(remaining.coerceAtLeast(100L))
+            }
+        }
+    }
 
     // 本地UI状态
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -184,11 +218,17 @@ fun AppMainScreen(
         }
     }
 
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp
+    val cardActiveBias = remember(screenWidth) {
+        ((screenWidth - 648f - 408f) / (2f * (screenWidth - 408f))).coerceIn(0.01f, 0.4f)
+    }
+
     // 机器人水平位移移动动画
-    // 当 isCardMode 为 true (点击卡片展开) 时，机器人滑向左侧 (bias 0.04f)
+    // 当 isCardMode 为 true (点击卡片展开) 时，机器人滑向左侧并居中于左半边空间 (bias = cardActiveBias)
     // 否则保持在中间 (bias 0.5f)
     val robotHorizontalBias by animateFloatAsState(
-        targetValue = if (activeOverlay.isNotEmpty()) 0.04f else 0.5f,
+        targetValue = if (activeOverlay.isNotEmpty()) cardActiveBias else 0.5f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioLowBouncy,
             stiffness = Spring.StiffnessLow
@@ -228,6 +268,14 @@ fun AppMainScreen(
                         )
                     )
                 )
+                .pointerInput(Unit) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            awaitPointerEvent(PointerEventPass.Initial)
+                            lastInteractionTime = System.currentTimeMillis()
+                        }
+                    }
+                }
         ) {
             BackgroundDecorations()
 
@@ -275,19 +323,19 @@ fun AppMainScreen(
                 ) {
                     val (airobotRef, featureScreensRef) = createRefs()
 
-                    // 1. 右侧卡片区域 (底层绘制，避免遮挡 Airobot)
+                    // 1. 卡片区域 (在 card mode 时在右边，否则在右边；底层绘制，避免遮挡 Airobot)
                     Box(
                         modifier = Modifier
                             .constrainAs(featureScreensRef) {
                                 if (activeOverlay.isNotEmpty()) {
-                                    end.linkTo(parent.end, margin = 48.dp)
+                                    end.linkTo(parent.end, margin = 48.dp) // Swapped back to right side
                                     width = Dimension.value(600.dp)
                                 } else {
                                     end.linkTo(parent.end, margin = 64.dp)
                                     width = Dimension.value(260.dp)
                                 }
                                 top.linkTo(parent.top)
-                                bottom.linkTo(parent.bottom)
+                                bottom.linkTo(parent.bottom, margin = 64.dp) // Pushed up to center within visible space (avoiding BottomFooter)
                                 height = Dimension.fillToConstraints
                             },
                         contentAlignment = if (activeOverlay.isNotEmpty()) Alignment.Center else Alignment.CenterEnd

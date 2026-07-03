@@ -2,6 +2,10 @@ package com.airobot.assistant.assembly
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -35,20 +39,30 @@ fun AirobotScreen(
     onBubbleClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // 1. Dynamic scaling of robot character: 15% reduction in card mode (340.dp)
+    val headSize by animateDpAsState(
+        targetValue = if (isCardMode) 340.dp else 400.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "robotHeadSize"
+    )
+
     ConstraintLayout(modifier = modifier.fillMaxSize()) {
         val (robotRef, voicePanelRef, aiBubbleRef, userBubbleRef) = createRefs()
 
-        // 1. 机器人角色
+        // 1. 机器人角色 (Centered vertically in the visible screen space)
         Box(
             modifier = Modifier
                 .constrainAs(robotRef) {
                     top.linkTo(parent.top)
-                    bottom.linkTo(voicePanelRef.top)
+                    bottom.linkTo(parent.bottom, margin = 64.dp) // Exclude bottom footer
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
                     horizontalBias = robotHorizontalBias
-                    verticalBias = 0.5f
-                    height = Dimension.fillToConstraints
+                    verticalBias = if (isCardMode) 0.33f else 0.45f
+                    height = Dimension.wrapContent // Wrap content to precisely reference its bottom edge
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -57,17 +71,19 @@ fun AirobotScreen(
                 characterType = characterType,
                 roleName = roleName,
                 audioLevel = { audioLevel },
-                headSize = 400.dp
+                headSize = headSize
             )
         }
 
-        // 2. 语音输入面板
+        // 2. 语音输入面板 (Centered vertically in the gap between robot.bottom and parent.bottom)
         Box(
             modifier = Modifier
                 .constrainAs(voicePanelRef) {
-                    bottom.linkTo(parent.bottom, margin = 40.dp)
+                    top.linkTo(robotRef.bottom)
+                    bottom.linkTo(parent.bottom, margin = 48.dp) // Positioned above the bottom bar
                     start.linkTo(robotRef.start)
                     end.linkTo(robotRef.end)
+                    verticalBias = 0.5f
                 }
         ) {
             VoiceInputPanel(
@@ -89,11 +105,11 @@ fun AirobotScreen(
             )
         }
 
-        // 3. AI 对话气泡 (贴近头像但不能覆盖头像，垂直居中稍偏上；有卡片服务时限制宽度为 260.dp 避免遮挡卡片)
+        // 3. AI 对话气泡 (Always placed on the right of the robot character)
         Box(
             modifier = Modifier
                 .constrainAs(aiBubbleRef) {
-                    start.linkTo(robotRef.end, margin = (-140).dp)
+                    start.linkTo(robotRef.end, margin = (-50).dp) // Shifted rightwards to avoid covering face
                     top.linkTo(robotRef.top)
                     bottom.linkTo(robotRef.bottom)
                     verticalBias = 0.42f
@@ -104,7 +120,7 @@ fun AirobotScreen(
                 aiMsg = currentRoundAiText,
                 onAiSpeechComplete = {},
                 onClose = onBubbleClose,
-                bubbleMaxWidth = if (isCardMode) 260.dp else 360.dp
+                bubbleMaxWidth = if (isCardMode) 180.dp else 360.dp // Made shorter in card mode to avoid overlapping the card on the right
             )
         }
 
