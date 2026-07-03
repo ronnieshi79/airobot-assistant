@@ -7,10 +7,12 @@ import com.airobot.features.FeatureCards
 import com.airobot.features.aiserv.routes.AiNotepadOverlayRoute
 import com.airobot.features.podcast.routes.PodcastOverlayRoute
 import com.airobot.features.podcast.routes.PodcastDiyOverlayRoute
+import com.airobot.airbot.viewmodel.RobotVisualState
 
 @Composable
 fun FeatureScreens(
     isCardMode: Boolean,
+    visualState: RobotVisualState,
     serviceCards: List<RecommendCard>,
     currentCardIndex: Int,
     onPageChanged: (Int) -> Unit,
@@ -21,14 +23,16 @@ fun FeatureScreens(
     onWakeupAirobot: () -> Unit
 ) {
     if (!isCardMode) {
-        // 展示右侧推荐卡片
-        CardRecommendationCarousel(
-            cards = serviceCards,
-            currentIndex = currentCardIndex,
-            onPageChanged = onPageChanged,
-            statusTip = statusTip,
-            onCardClick = onCardClick
-        )
+        // 展示右侧推荐卡片 (对话状态下隐藏推荐小组件)
+        if (!visualState.isDialogueFamily) {
+            CardRecommendationCarousel(
+                cards = serviceCards,
+                currentIndex = currentCardIndex,
+                onPageChanged = onPageChanged,
+                statusTip = statusTip,
+                onCardClick = onCardClick
+            )
+        }
     } else {
         // 展示功能详情Overlay
         if (activeOverlay.isNotEmpty()) {
@@ -53,3 +57,4 @@ fun FeatureScreens(
         }
     }
 }
+

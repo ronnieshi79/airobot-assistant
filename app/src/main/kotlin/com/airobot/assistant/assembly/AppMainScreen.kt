@@ -188,7 +188,7 @@ fun AppMainScreen(
     // 当 isCardMode 为 true (点击卡片展开) 时，机器人滑向左侧 (bias 0.04f)
     // 否则保持在中间 (bias 0.5f)
     val robotHorizontalBias by animateFloatAsState(
-        targetValue = if (robotUiState.isCardMode) 0.04f else 0.5f,
+        targetValue = if (activeOverlay.isNotEmpty()) 0.04f else 0.5f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioLowBouncy,
             stiffness = Spring.StiffnessLow
@@ -275,7 +275,58 @@ fun AppMainScreen(
                 ) {
                     val (airobotRef, featureScreensRef) = createRefs()
 
-                    // 1. Airobot 组件组合
+                    // 1. 右侧卡片区域 (底层绘制，避免遮挡 Airobot)
+                    Box(
+                        modifier = Modifier
+                            .constrainAs(featureScreensRef) {
+                                if (activeOverlay.isNotEmpty()) {
+                                    end.linkTo(parent.end, margin = 48.dp)
+                                    width = Dimension.value(600.dp)
+                                } else {
+                                    end.linkTo(parent.end, margin = 64.dp)
+                                    width = Dimension.value(260.dp)
+                                }
+                                top.linkTo(parent.top)
+                                bottom.linkTo(parent.bottom)
+                                height = Dimension.fillToConstraints
+                            },
+                        contentAlignment = if (activeOverlay.isNotEmpty()) Alignment.Center else Alignment.CenterEnd
+                    ) {
+                        FeatureScreens(
+                            isCardMode = activeOverlay.isNotEmpty(),
+                            visualState = robotUiState.visualState,
+                            serviceCards = serviceCards,
+                            currentCardIndex = currentCardIndex,
+                            onPageChanged = { currentCardIndex = it },
+                            statusTip = robotUiState.statusTip,
+                            activeOverlay = activeOverlay,
+                            onCardClick = { card ->
+                                val targetCard = if (serviceCards.contains(card)) card else serviceCards.getOrNull(currentCardIndex) ?: card
+                                robotUiState = robotUiState.copy(
+                                    interactionType = InteractionType.CARD,
+                                    visualState = RobotVisualState.LISTENING,
+                                    currentUserMsg = null,
+                                    currentAiMsg = null
+                                )
+                                overlayViewModel.showOverlay(targetCard.tag)
+                                if (permissionsState.allPermissionsGranted) {
+                                    conversationViewModel.startConversation()
+                                }
+                            },
+                            onCloseOverlay = {
+                                robotUiState = robotUiState.copy(
+                                    visualState = RobotVisualState.IDLE
+                                )
+                                overlayViewModel.hideOverlay()
+                                conversationViewModel.interrupt()
+                            },
+                            onWakeupAirobot = {
+                                conversationViewModel.startConversation()
+                            }
+                        )
+                    }
+
+                    // 2. Airobot 组件组合 (顶层绘制，确保语音交互面板浮于功能卡片上方且可响应点击)
                     AirobotScreen(
                         robotHorizontalBias = robotHorizontalBias,
                         robotVisualState = robotUiState.visualState,
@@ -286,6 +337,8 @@ fun AppMainScreen(
                         isTimerActive = activeOverlay == "overlay_timer",
                         isTimerPaused = false, // Timer pause state is managed inside timer overlay now
                         currentRoundAiText = currentRoundAiText,
+                        currentRoundUserText = currentRoundUserText,
+                        isCardMode = activeOverlay.isNotEmpty(),
                         onStartListening = {
                             if (permissionsState.allPermissionsGranted) {
                                 robotUiState = robotUiState.copy(
@@ -326,56 +379,6 @@ fun AppMainScreen(
                             height = Dimension.fillToConstraints
                         }
                     )
-
-                    // 2. 右侧卡片区域
-                    Box(
-                        modifier = Modifier
-                            .constrainAs(featureScreensRef) {
-                                if (robotUiState.isCardMode) {
-                                    end.linkTo(parent.end, margin = 48.dp)
-                                    width = Dimension.value(600.dp)
-                                } else {
-                                    end.linkTo(parent.end, margin = 64.dp)
-                                    width = Dimension.value(260.dp)
-                                }
-                                top.linkTo(parent.top)
-                                bottom.linkTo(parent.bottom)
-                                height = Dimension.fillToConstraints
-                            },
-                        contentAlignment = if (robotUiState.isCardMode) Alignment.Center else Alignment.CenterEnd
-                    ) {
-                        FeatureScreens(
-                            isCardMode = robotUiState.isCardMode,
-                            serviceCards = serviceCards,
-                            currentCardIndex = currentCardIndex,
-                            onPageChanged = { currentCardIndex = it },
-                            statusTip = robotUiState.statusTip,
-                            activeOverlay = activeOverlay,
-                            onCardClick = { card ->
-                                val targetCard = if (serviceCards.contains(card)) card else serviceCards.getOrNull(currentCardIndex) ?: card
-                                robotUiState = robotUiState.copy(
-                                    interactionType = InteractionType.CARD,
-                                    visualState = RobotVisualState.LISTENING,
-                                    currentUserMsg = null,
-                                    currentAiMsg = null
-                                )
-                                overlayViewModel.showOverlay(targetCard.tag)
-                                if (permissionsState.allPermissionsGranted) {
-                                    conversationViewModel.startConversation()
-                                }
-                            },
-                            onCloseOverlay = {
-                                robotUiState = robotUiState.copy(
-                                    visualState = RobotVisualState.IDLE
-                                )
-                                overlayViewModel.hideOverlay()
-                                conversationViewModel.interrupt()
-                            },
-                            onWakeupAirobot = {
-                                conversationViewModel.startConversation()
-                            }
-                        )
-                    }
                 }
             }
 

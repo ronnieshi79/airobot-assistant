@@ -88,7 +88,7 @@ class MainShellViewModel @Inject constructor(
                         val isNetworkReady = netCommService.isConnected
                         val isSystemReady = sysManage.state.value is SysState.Ready
                         if (isNetworkReady && isSystemReady &&
-                            (currentState is RobotState.Ready || currentState is RobotState.Conversation)) {
+                            (currentState is RobotState.Ready || currentState is RobotState.Conversation || currentState is RobotState.FunctionService)) {
                             Log.d("MainShellViewModel", "Conditions met. Proceeding with wakeup.")
                             viewModelScope.launch {
                                 _wakeupEvent.emit(Unit)

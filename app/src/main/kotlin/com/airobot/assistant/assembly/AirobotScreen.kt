@@ -9,6 +9,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import com.airobot.airbot.character.RobotCharacter
 import com.airobot.airbot.components.dialogue.BubbleAiDialogue
+import com.airobot.airbot.components.dialogue.BubbleUserMessage
 import com.airobot.airbot.components.interaction.VoiceInputPanel
 import com.airobot.airbot.domain.model.CharacterType
 import com.airobot.airbot.viewmodel.RobotVisualState
@@ -24,6 +25,8 @@ fun AirobotScreen(
     isTimerActive: Boolean,
     isTimerPaused: Boolean,
     currentRoundAiText: String?,
+    currentRoundUserText: String?,
+    isCardMode: Boolean,
     onStartListening: () -> Unit,
     onStopListening: () -> Unit,
     onInterruptSpeak: () -> Unit,
@@ -33,7 +36,7 @@ fun AirobotScreen(
     modifier: Modifier = Modifier
 ) {
     ConstraintLayout(modifier = modifier.fillMaxSize()) {
-        val (robotRef, voicePanelRef, aiBubbleRef) = createRefs()
+        val (robotRef, voicePanelRef, aiBubbleRef, userBubbleRef) = createRefs()
 
         // 1. 机器人角色
         Box(
@@ -86,20 +89,38 @@ fun AirobotScreen(
             )
         }
 
-        // 3. AI 对话气泡
+        // 3. AI 对话气泡 (贴近头像但不能覆盖头像，垂直居中稍偏上；有卡片服务时限制宽度为 260.dp 避免遮挡卡片)
         Box(
             modifier = Modifier
                 .constrainAs(aiBubbleRef) {
-                    start.linkTo(robotRef.end, margin = (-180).dp)
-                    top.linkTo(robotRef.top, margin = 180.dp)
+                    start.linkTo(robotRef.end, margin = (-140).dp)
+                    top.linkTo(robotRef.top)
+                    bottom.linkTo(robotRef.bottom)
+                    verticalBias = 0.42f
                 }
         ) {
             BubbleAiDialogue(
                 robotState = robotVisualState,
                 aiMsg = currentRoundAiText,
                 onAiSpeechComplete = {},
-                onClose = onBubbleClose
+                onClose = onBubbleClose,
+                bubbleMaxWidth = if (isCardMode) 260.dp else 360.dp
+            )
+        }
+
+        // 4. 用户对话气泡 (显示在提示词位置，遮挡提示词；当对话结束/非对话状态时收起)
+        Box(
+            modifier = Modifier
+                .constrainAs(userBubbleRef) {
+                    bottom.linkTo(voicePanelRef.bottom)
+                    start.linkTo(voicePanelRef.start)
+                    end.linkTo(voicePanelRef.end)
+                }
+        ) {
+            BubbleUserMessage(
+                message = if (robotVisualState.isDialogueFamily) (currentRoundUserText ?: "") else ""
             )
         }
     }
 }
+
