@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -66,6 +67,7 @@ fun PodcastPlayerOverlay(
     onWakeupAirobot: () -> Unit,
     podcastViewModel: PodcastViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val isDark = RobotTheme.isDark
 
     // Unified alert banner states
@@ -77,6 +79,14 @@ fun PodcastPlayerOverlay(
         if (alertVisible) {
             delay(2500)
             alertVisible = false
+        }
+    }
+
+    LaunchedEffect(podcastViewModel) {
+        podcastViewModel.playbackError.collect { stringResId ->
+            alertMessage = context.getString(stringResId)
+            alertSeverity = TopAlertSeverity.ERROR
+            alertVisible = true
         }
     }
 

@@ -24,9 +24,13 @@ fun PodcastHomeRoute(
                 "podcast" -> {
                     val activeEp = podcastViewModel.activeEpisode.value
                     if (activeEp == null) {
-                        // Play the first available episode if player is opened empty
-                        podcastViewModel.recommendedEpisodes.value.firstOrNull()?.let {
-                            podcastViewModel.playEpisode(it)
+                        val firstRealEp = podcastViewModel.recommendedEpisodes.value.firstOrNull { it.isDiy && !it.mediaUri.isNullOrEmpty() }
+                        if (firstRealEp != null) {
+                            podcastViewModel.playEpisode(firstRealEp)
+                        } else {
+                            podcastViewModel.recommendedEpisodes.value.firstOrNull()?.let {
+                                podcastViewModel.playEpisode(it)
+                            }
                         }
                     }
                     onShowOverlay(FeatureCards.PODCAST)
