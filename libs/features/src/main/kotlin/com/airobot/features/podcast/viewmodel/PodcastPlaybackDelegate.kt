@@ -73,6 +73,25 @@ class PodcastPlaybackDelegate @Inject constructor(
 
     init {
         observeRealPlayback()
+        delegateScope.launch {
+            dataDelegate.episodes.collect { eps ->
+                if (_activeEpisode.value == null && eps.isNotEmpty()) {
+                    val firstReal = eps.firstOrNull { it.isDiy && !it.mediaUri.isNullOrEmpty() }
+                    if (firstReal != null) {
+                        _activeEpisode.value = firstReal
+                        _progress.value = firstReal.progress
+                        Log.d(TAG, "Pre-populated activeEpisode with first real DIY episode: ${firstReal.title}")
+                    } else {
+                        val firstPreset = eps.firstOrNull()
+                        if (firstPreset != null) {
+                            _activeEpisode.value = firstPreset
+                            _progress.value = firstPreset.progress
+                            Log.d(TAG, "Pre-populated activeEpisode with first preset episode: ${firstPreset.title}")
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun observeRealPlayback() {

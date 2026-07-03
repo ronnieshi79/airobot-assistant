@@ -123,7 +123,7 @@ fun AiNotepadOverlay(
         )
     }
 
-    val allRecords = remember(alarmHistory, timerHistory, focusHistory) {
+    val allRecords = remember(alarmHistory, timerHistory, focusHistory, podcastHistory) {
         liveRecords.sortedByDescending { it.timestamp }
     }
 
