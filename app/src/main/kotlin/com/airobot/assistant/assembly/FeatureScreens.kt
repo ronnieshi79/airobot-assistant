@@ -1,9 +1,9 @@
 package com.airobot.assistant.assembly
 
 import androidx.compose.runtime.Composable
-import com.airobot.features.aiserv.guidance.components.ServiceCardCarousel
-import com.airobot.features.aiserv.guidance.data.RecommendedCard
-import com.airobot.features.aiserv.popup.OverlayTags
+import com.airobot.features.aiserv.guidance.components.CardRecommendationCarousel
+import com.airobot.features.aiserv.guidance.data.RecommendCard
+import com.airobot.features.FeatureCards
 import com.airobot.features.aiserv.routes.AiNotepadOverlayRoute
 import com.airobot.features.podcast.routes.PodcastOverlayRoute
 import com.airobot.features.podcast.routes.PodcastDiyOverlayRoute
@@ -11,18 +11,18 @@ import com.airobot.features.podcast.routes.PodcastDiyOverlayRoute
 @Composable
 fun FeatureScreens(
     isCardMode: Boolean,
-    serviceCards: List<RecommendedCard>,
+    serviceCards: List<RecommendCard>,
     currentCardIndex: Int,
     onPageChanged: (Int) -> Unit,
     statusTip: String,
-    onCardClick: (RecommendedCard) -> Unit,
+    onCardClick: (RecommendCard) -> Unit,
     activeOverlay: String,
     onCloseOverlay: () -> Unit,
     onWakeupAirobot: () -> Unit
 ) {
     if (!isCardMode) {
         // 展示右侧推荐卡片
-        ServiceCardCarousel(
+        CardRecommendationCarousel(
             cards = serviceCards,
             currentIndex = currentCardIndex,
             onPageChanged = onPageChanged,
@@ -33,18 +33,18 @@ fun FeatureScreens(
         // 展示功能详情Overlay
         if (activeOverlay.isNotEmpty()) {
             when (activeOverlay) {
-                OverlayTags.PODCAST -> {
+                FeatureCards.PODCAST -> {
                     PodcastOverlayRoute(
                         onHideOverlay = onCloseOverlay,
                         onWakeupAirobot = onWakeupAirobot
                     )
                 }
-                OverlayTags.DIY_PODCAST -> {
+                FeatureCards.DIY_PODCAST -> {
                     PodcastDiyOverlayRoute(
                         onHideOverlay = onCloseOverlay
                     )
                 }
-                OverlayTags.LOGBOOK -> {
+                FeatureCards.LOGBOOK -> {
                     AiNotepadOverlayRoute(
                         onHideOverlay = onCloseOverlay
                     )

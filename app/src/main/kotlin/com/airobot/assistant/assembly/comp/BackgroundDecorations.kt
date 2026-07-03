@@ -1,4 +1,4 @@
-﻿package com.airobot.assistant.ui.comp
+﻿package com.airobot.assistant.assembly.comp
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -25,7 +25,7 @@ fun BackgroundDecorations() {
         ),
         label = "pulseScale"
     )
-    
+
     Box(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
@@ -35,7 +35,7 @@ fun BackgroundDecorations() {
                 .background(RobotTheme.colors.backgroundShapes)
                 .blur(120.dp)
         )
-        
+
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)

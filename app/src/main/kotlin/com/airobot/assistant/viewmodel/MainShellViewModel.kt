@@ -1,4 +1,4 @@
-﻿package com.airobot.assistant.viewmodel
+package com.airobot.assistant.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -18,8 +18,8 @@ import com.airobot.core.comm.NetCommEvent
 import com.airobot.airbot.domain.model.RobotState
 import com.airobot.airbot.api.AirbotEngineApi
 import com.airobot.airbot.api.AirbotCharacterApi
-import com.airobot.agent.AudioEvent
-import com.airobot.agent.AudioService
+import com.airobot.agent.audio.AudioEvent
+import com.airobot.agent.audio.AudioService
 
 /**
  * 主外壳控制 ViewModel

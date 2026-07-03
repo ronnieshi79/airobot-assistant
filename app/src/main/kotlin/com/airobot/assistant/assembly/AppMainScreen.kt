@@ -1,5 +1,4 @@
 package com.airobot.assistant.assembly
-import com.airobot.airbot.domain.model.AirbotServiceSubState
 
 import android.Manifest
 import androidx.compose.animation.core.*
@@ -27,7 +26,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import com.airobot.framework.theme.RobotTheme
 import com.airobot.framework.theme.RobotThemeMode
-import com.airobot.assistant.ui.comp.BackgroundDecorations
 import com.airobot.assistant.settings.AiRobotDialog
 import com.airobot.framework.layout.RobotTopBar
 import com.airobot.framework.layout.SystemDrawer
@@ -35,7 +33,6 @@ import com.airobot.framework.layout.DrawerMenuItemData
 import com.airobot.assistant.settings.AiRobotConfig
 import com.airobot.assistant.settings.RoleConfig
 import com.airobot.assistant.settings.SystemAuth
-import com.airobot.assistant.assembly.APP_SUPPORTED_OVERLAYS
 import androidx.compose.ui.res.stringResource
 import com.airobot.airbot.domain.model.ConversationSubState
 import com.airobot.airbot.domain.model.RobotState
@@ -43,6 +40,7 @@ import com.airobot.airbot.viewmodel.RobotUiState
 import com.airobot.airbot.viewmodel.RobotVisualState
 import com.airobot.assistant.viewmodel.MainShellViewModel
 import com.airobot.airbot.viewmodel.ConversationViewModel
+import com.airobot.assistant.assembly.comp.BackgroundDecorations
 import com.airobot.framework.theme.StatusAmber
 import com.airobot.framework.theme.StatusCyan
 import com.airobot.framework.theme.StatusEmerald
@@ -103,8 +101,8 @@ fun AppMainScreen(
     var robotUiState by remember { mutableStateOf(RobotUiState()) }
     var currentCardIndex by remember { mutableIntStateOf(0) }
 
-    // 服务卡片定义 (由 Hilt Singleton 注入的 RecommendationEngine 计算出的动态列表)
-    val serviceCards by overlayViewModel.getRecommendedCards().collectAsState(initial = emptyList())
+    // 服务卡片定义 (由 Hilt Singleton 注入的 CardRecommendEngine 计算出的动态列表)
+    val serviceCards by overlayViewModel.getRecommendCards().collectAsState(initial = emptyList())
     val currentCard = serviceCards.getOrNull(currentCardIndex) ?: serviceCards.firstOrNull()
     val currentStatusTip = currentCard?.let { stringResource(id = it.statusTipResId) } ?: ""
 
@@ -349,7 +347,7 @@ fun AppMainScreen(
                                     currentUserMsg = null,
                                     currentAiMsg = null
                                 )
-                                overlayViewModel.showOverlay(targetCard.overlayTag)
+                                overlayViewModel.showOverlay(targetCard.tag)
                                 if (permissionsState.allPermissionsGranted) {
                                     conversationViewModel.startConversation()
                                 }
