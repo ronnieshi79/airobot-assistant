@@ -12,7 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
 import com.airobot.features.aiserv.event.AiEvent
 import com.airobot.features.aiserv.event.AiEventDispatcher
-import com.airobot.features.aiserv.popup.OverlayTags
+import com.airobot.features.FeatureCards
 import com.airobot.features.aiserv.popup.PopupQueueService
 import com.airobot.features.aiserv.popup.PopupServiceItem
 import com.airobot.features.clock.cards.HourlyChimeOverlay
@@ -126,7 +126,7 @@ class HourlyChimeManager @Inject constructor(
         val data: ChimeServiceData
     ) : PopupServiceItem() {
         override val id: String = "chime_hourly"
-        override val serviceType: String = OverlayTags.CHIME
+        override val serviceType: String = FeatureCards.CHIME
         override val displayName: String = "整点报时"
         override val priority: Int = if (data.isForeground) 90 else 10
         override val timeoutDurationMs: Long =

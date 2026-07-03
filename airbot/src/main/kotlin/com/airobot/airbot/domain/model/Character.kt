@@ -41,7 +41,7 @@ object RiveCharacterConfig {
             context.packageName
         )
         return if (resId != 0) resId else context.resources.getIdentifier(
-            "xin_xiao_miao",
+            "xin_xiao_ling",
             "raw",
             context.packageName
         )
@@ -55,7 +55,7 @@ object RiveCharacterConfig {
 
         return RiveCharacterEntry(
             name = defaultRobot.roleName,
-            resourceName = defaultRobot.riveResourceName ?: "xin_xiao_miao",
+            resourceName = defaultRobot.riveResourceName ?: "xin_xiao_ling",
             scale = defaultRobot.riveScale,
             offsetX = defaultRobot.riveOffsetX,
             offsetY = defaultRobot.riveOffsetY
@@ -99,13 +99,13 @@ data class Character(
                 wakeWord = "你好小叶"
             ),
             Character(
-                roleName = "心小苗",
+                roleName = "心小灵",
                 characterType = "RIVE_IP",
                 personality = "温暖治愈、积极乐观",
                 voiceModel = "火山模型",
-                alias = "小苗",
-                wakeWord = "你好小苗",
-                riveResourceName = "xin_xiao_miao",
+                alias = "小灵",
+                wakeWord = "你好小灵",
+                riveResourceName = "xin_xiao_ling",
                 riveScale = 1.0f,
                 riveOffsetX = 0f,
                 riveOffsetY = 0f

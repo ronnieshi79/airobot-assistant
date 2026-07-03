@@ -37,42 +37,56 @@ fun OverlayTabsScaffold(
         onClose = onClose,
         enabled = enabled
     ) {
-        Box(
-            modifier = Modifier
-                .width(515.dp)
-                .height(580.dp)
-                .offset(x = 22.5.dp)
-                .clickable(enabled = false) {},
-            contentAlignment = Alignment.CenterStart
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            // --- Right Hanging Tabs Column (drawn behind the main card) ---
-            Column(
-                modifier = Modifier
-                    .width(50.dp)
-                    .align(Alignment.CenterEnd)
-                    .zIndex(0f),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                tabs()
-            }
+            val availableWidth = maxWidth
+            val availableHeight = maxHeight
 
-            // --- Main Skeuomorphic Card Box ---
+            val totalWidth = if (availableWidth < 515.dp) (availableWidth - 32.dp).coerceAtLeast(250.dp) else 515.dp
+            val totalHeight = if (availableHeight < 580.dp) availableHeight else 580.dp
+            val tabsWidth = 50.dp
+            val mainCardWidth = if (availableWidth < 515.dp) (totalWidth - 45.dp).coerceAtLeast(200.dp) else 470.dp
+            val xOffset = if (availableWidth < 515.dp) 0.dp else 22.5.dp
+
             Box(
                 modifier = Modifier
-                    .width(470.dp)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(36.dp))
-                    .background(
-                        brush = Brush.verticalGradient(
-                            if (isDark) listOf(Color(0xFF242730), Color(0xFF16181F))
-                            else listOf(Color(0xFFFAF5EB), Color(0xFFF3EDE0))
-                        )
-                    )
-                    .border(2.dp, cardBorderColor, RoundedCornerShape(36.dp))
-                    .clickable(enabled = false) {} // block backdrop click
-                    .zIndex(1f)
+                    .width(totalWidth)
+                    .height(totalHeight)
+                    .offset(x = xOffset)
+                    .clickable(enabled = false) {},
+                contentAlignment = Alignment.CenterStart
             ) {
-                content()
+                // --- Right Hanging Tabs Column (drawn behind the main card) ---
+                Column(
+                    modifier = Modifier
+                        .width(tabsWidth)
+                        .align(Alignment.CenterEnd)
+                        .zIndex(0f),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    tabs()
+                }
+
+                // --- Main Skeuomorphic Card Box ---
+                Box(
+                    modifier = Modifier
+                        .width(mainCardWidth)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(36.dp))
+                        .background(
+                            brush = Brush.verticalGradient(
+                                if (isDark) listOf(Color(0xFF242730), Color(0xFF16181F))
+                                else listOf(Color(0xFFFAF5EB), Color(0xFFF3EDE0))
+                            )
+                        )
+                        .border(2.dp, cardBorderColor, RoundedCornerShape(36.dp))
+                        .clickable(enabled = false) {} // block backdrop click
+                        .zIndex(1f)
+                ) {
+                    content()
+                }
             }
         }
     }

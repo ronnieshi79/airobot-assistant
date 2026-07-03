@@ -6,7 +6,7 @@ import android.media.audiofx.AutomaticGainControl
 import android.media.audiofx.NoiseSuppressor
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
-import com.airobot.agent.AudioConfig
+import com.airobot.agent.audio.AudioConfig
 import java.util.LinkedList
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -115,7 +115,10 @@ class AfeManager @Inject constructor(
                     preRollBuffer.clear()
                     framesToFlush.add(pcmData)
 
-                    Log.d(TAG, "VAD Speech Start detected. Flushing ${framesToFlush.size} pre-roll frames.")
+                    Log.d(
+                        TAG,
+                        "VAD Speech Start detected. Flushing ${framesToFlush.size} pre-roll frames."
+                    )
                     return AfeResult(framesToFlush, AfeEvent.SPEECH_START)
                 } else {
                     if (preRollBuffer.size >= PRE_ROLL_FRAMES) {

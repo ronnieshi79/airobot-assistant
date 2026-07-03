@@ -151,10 +151,7 @@ fun PodcastPlayerOverlay(
 
     // Get Media3 Player for video surface binding
     val player = if (isDiyEpisode && activeEpisode?.type == "video") {
-        podcastViewModel.realPlaybackState.value.let {
-            // Access the player from playback service via ViewModel
-            null // Player is passed separately below
-        }
+        null // Player is passed separately below
     } else null
 
     Box(modifier = Modifier.fillMaxSize()) {

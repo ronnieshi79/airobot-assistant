@@ -1,7 +1,7 @@
 package com.airobot.agent.skills.podcast
 
 import android.util.Log
-import com.airobot.agent.AudioService
+import com.airobot.agent.audio.AudioService
 import com.airobot.agent.brain.AgentSessionCoordinator
 import com.airobot.agent.skills.AiSkill
 import com.airobot.agent.skills.SkillResult

@@ -1,4 +1,4 @@
-package com.airobot.features.aiserv.guidance
+package com.airobot.features.aiserv.guidance.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -42,15 +42,7 @@ import com.airobot.framework.theme.RobotTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/**
- * Page data model for AI Remind Banner.
- */
-internal data class RemindPage(
-    val title: String,
-    val content: String,
-    val actionTarget: String,
-    val icon: ImageVector? = null
-)
+import com.airobot.features.aiserv.guidance.data.RemindCard
 
 /**
  * Aether Remind Banner — a dynamic internal multi-page recommendation component.
@@ -59,10 +51,10 @@ internal data class RemindPage(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun AetherRemindBanner(
-    pages: List<RemindPage>,
+    pages: List<RemindCard>,
     cardIcon: ImageVector,
     accentColor: Color,
-    onPageClick: (RemindPage) -> Unit,
+    onPageClick: (RemindCard) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val isDark = RobotTheme.isDark

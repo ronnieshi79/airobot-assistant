@@ -1,7 +1,7 @@
 package com.airobot.airbot.domain
 
 import android.util.Log
-import com.airobot.agent.AudioService
+import com.airobot.agent.audio.AudioService
 import com.airobot.airbot.api.AirbotCharacterApi
 import com.airobot.airbot.data.CharacterConfig
 import com.airobot.airbot.data.CharacterRepo
@@ -29,8 +29,13 @@ class CharacterManagerImpl @Inject constructor(
         private val predefinedTokens = mapOf(
             "小叶" to listOf("x iǎo y e", "x iǎo y è", "x iǎo y é"),
             "你好小叶" to listOf("n ǐ h ǎo x iǎo y e", "n ǐ h ǎo x iǎo y è", "n ǐ h ǎo x iǎo y é"),
-            "小苗" to listOf("x iǎo m iáo", "x iǎo m iao", "x iǎo m iào"),
-            "你好小苗" to listOf("n ǐ h ǎo x iǎo m iáo", "n ǐ h ǎo x iǎo m iao"),
+            "小灵" to listOf("x iǎo l íng", "x iǎo l ing", "x iǎo l ǐng", "x iǎo l ìng"),
+            "你好小灵" to listOf(
+                "n ǐ h ǎo x iǎo l íng",
+                "n ǐ h ǎo x iǎo l ing",
+                "n ǐ h ǎo x iǎo l ǐng",
+                "n ǐ h ǎo x iǎo l ìng"
+            ),
             "小白" to listOf("x iǎo b ái", "x iǎo b ai", "x iǎo b ài"),
             "你好小白" to listOf("n ǐ h ǎo x iǎo b ái", "n ǐ h ǎo x iǎo b ai"),
             "小小" to listOf("x iǎo x iǎo", "x iǎo x iao"),
@@ -60,7 +65,7 @@ class CharacterManagerImpl @Inject constructor(
 
         // Seed default characters or migrate if contains old names
         val hasOldNames =
-            config.characterList.any { it.roleName == "心小安" || it.roleName == "花小龙" }
+            config.characterList.any { it.roleName == "心小安" || it.roleName == "花小龙" || it.roleName == "心小苗" }
         if (config.characterList.isEmpty() || hasOldNames) {
             config = config.copy(characterList = Character.DEFAULT_ROBOTS, activeRoleIndex = 0)
             characterRepo.saveConfig(config)

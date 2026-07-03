@@ -5,7 +5,7 @@ import androidx.media3.common.Player
 import com.airobot.features.aiserv.event.AiEvent
 import com.airobot.features.aiserv.event.AiEventDispatcher
 import com.airobot.features.aiserv.popup.OverlayCoordinator
-import com.airobot.features.aiserv.popup.OverlayTags
+import com.airobot.features.FeatureCards
 import com.airobot.features.podcast.data.PodcastRepository
 import com.airobot.features.podcast.data.model.PodcastEpisode
 import com.airobot.features.podcast.service.PlaybackState
@@ -468,7 +468,7 @@ class PodcastPlaybackDelegate @Inject constructor(
                     activeType == "video" || activeType == "视频"
                 }
             if (matchesType) {
-                overlayCoordinator.showOverlay(OverlayTags.PODCAST)
+                overlayCoordinator.showOverlay(FeatureCards.PODCAST)
                 if (!_isPlaying.value) {
                     resume()
                 }
@@ -482,7 +482,7 @@ class PodcastPlaybackDelegate @Inject constructor(
             Log.w(TAG, "playRecommended: recommended list is empty for type=$type")
             return false
         }
-        overlayCoordinator.showOverlay(OverlayTags.PODCAST)
+        overlayCoordinator.showOverlay(FeatureCards.PODCAST)
         playEpisode(recommended.first())
         return true
     }
@@ -501,7 +501,7 @@ class PodcastPlaybackDelegate @Inject constructor(
         } else {
             recommended.first()
         }
-        overlayCoordinator.showOverlay(OverlayTags.PODCAST)
+        overlayCoordinator.showOverlay(FeatureCards.PODCAST)
         playEpisode(nextEpisode)
         return true
     }

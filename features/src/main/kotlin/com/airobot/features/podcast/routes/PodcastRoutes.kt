@@ -2,25 +2,38 @@ package com.airobot.features.podcast.routes
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.airobot.features.aiserv.popup.OverlayTags
+import com.airobot.features.FeatureCards
 import com.airobot.features.podcast.cards.PodcastHomeCard
 import com.airobot.features.podcast.cards.PodcastLibraryCard
 import com.airobot.features.podcast.cards.PodcastSubscribeCard
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.airobot.features.podcast.viewmodel.PodcastViewModel
 
 @Composable
 fun PodcastHomeRoute(
     modifier: Modifier = Modifier,
+    podcastViewModel: PodcastViewModel = hiltViewModel(),
     onShowOverlay: (String) -> Unit,
     onNavigateToLibrary: () -> Unit
 ) {
     PodcastHomeCard(
         modifier = modifier,
-        onPlayClick = { onShowOverlay(OverlayTags.PODCAST) },
+        onPlayClick = { onShowOverlay(FeatureCards.PODCAST) },
         onRemindClick = { action ->
             when (action) {
-                "podcast" -> onShowOverlay(OverlayTags.PODCAST)
-                "logbook" -> onShowOverlay(OverlayTags.LOGBOOK)
-                "diy" -> onShowOverlay(OverlayTags.DIY_PODCAST)
+                "podcast" -> {
+                    val activeEp = podcastViewModel.activeEpisode.value
+                    if (activeEp == null) {
+                        // Play the first available episode if player is opened empty
+                        podcastViewModel.recommendedEpisodes.value.firstOrNull()?.let {
+                            podcastViewModel.playEpisode(it)
+                        }
+                    }
+                    onShowOverlay(FeatureCards.PODCAST)
+                }
+                "logbook" -> onShowOverlay(FeatureCards.LOGBOOK)
+                "diy" -> onShowOverlay(FeatureCards.DIY_PODCAST)
+                else -> onShowOverlay(action)
             }
         },
         onNavigateToLibrary = onNavigateToLibrary
@@ -34,7 +47,7 @@ fun PodcastLibraryRoute(
 ) {
     PodcastLibraryCard(
         modifier = modifier,
-        onPlayClick = { onShowOverlay(OverlayTags.PODCAST) }
+        onPlayClick = { onShowOverlay(FeatureCards.PODCAST) }
     )
 }
 

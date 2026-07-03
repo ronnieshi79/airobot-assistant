@@ -66,6 +66,7 @@ import kotlin.math.sin
 /**
  * Skeuomorphic Retro CRT TV Monitor for video/visual podcast playback.
  */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 @Composable
 fun CrtMonitorPlayer(
     episode: PodcastEpisode,

@@ -128,6 +128,13 @@ private fun updateRiveInputs(
         0f
     }
 
+    // Prevent redundant property updates if the values did not actually change
+    if (holder.lastSetStateNum == stateNum && holder.lastSetSmoothMouthOpen == smoothMouthOpen) {
+        return
+    }
+    holder.lastSetStateNum = stateNum
+    holder.lastSetSmoothMouthOpen = smoothMouthOpen
+
     // Check if state changed, trigger corresponding ViewModel trigger properties if needed
     val lastState = holder.lastVisualState
     val stateMachine = view.controller.stateMachines.firstOrNull()
@@ -256,7 +263,9 @@ private fun updateRiveInputs(
  */
 private class CharacterStateHolder(
     var lastVisualState: RobotVisualState? = null,
-    var lastSmoothMouthOpen: Float = 0f
+    var lastSmoothMouthOpen: Float = 0f,
+    var lastSetStateNum: Float? = null,
+    var lastSetSmoothMouthOpen: Float? = null
 )
 
 

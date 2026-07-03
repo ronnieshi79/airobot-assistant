@@ -1,7 +1,7 @@
 package com.airobot.agent.audio.recorder.pipeline
 
 import android.util.Log
-import com.airobot.agent.AudioEvent
+import com.airobot.agent.audio.AudioEvent
 import com.airobot.agent.audio.tools.kws.KwsManager
 import java.util.LinkedList
 import kotlinx.coroutines.launch
@@ -13,12 +13,15 @@ class AudioKwsNode(private val kwsManager: KwsManager) {
     }
 
     private val channel = kotlinx.coroutines.channels.Channel<PipelineMessage>(
-        capacity = 64, 
+        capacity = 64,
         onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
     )
     private val preWakeupBuffer = LinkedList<ByteArray>()
 
-    fun start(scope: kotlinx.coroutines.CoroutineScope, onTriggered: suspend (List<PipelineMessage>) -> Unit) {
+    fun start(
+        scope: kotlinx.coroutines.CoroutineScope,
+        onTriggered: suspend (List<PipelineMessage>) -> Unit
+    ) {
         scope.launch {
             for (message in channel) {
                 when (message) {
@@ -28,11 +31,13 @@ class AudioKwsNode(private val kwsManager: KwsManager) {
                             kwsManager.resetStream()
                         }
                     }
+
                     is PipelineMessage.Command -> {
                         if (message.action == "ClearBuffer") {
                             preWakeupBuffer.clear()
                         }
                     }
+
                     is PipelineMessage.AudioFrame -> {
                         val frame = message
                         if (preWakeupBuffer.size >= MAX_HISTORY_FRAMES) {
@@ -42,11 +47,14 @@ class AudioKwsNode(private val kwsManager: KwsManager) {
 
                         val keyword = kwsManager.process(frame.pcmData)
                         if (keyword != null) {
-                            Log.d(TAG, "KWS Detected keyword: \$keyword. Flushing pre-wakeup buffer.")
+                            Log.d(
+                                TAG,
+                                "KWS Detected keyword: \$keyword. Flushing pre-wakeup buffer."
+                            )
                             val messages = mutableListOf<PipelineMessage>()
                             // 1. Insert Wakeup marker
                             messages.add(PipelineMessage.EventMarker(AudioEvent.Wakeup))
-                            
+
                             // 2. Insert historical frames
                             while (preWakeupBuffer.isNotEmpty()) {
                                 messages.add(PipelineMessage.AudioFrame(preWakeupBuffer.removeFirst()))
@@ -66,7 +74,7 @@ class AudioKwsNode(private val kwsManager: KwsManager) {
     fun clearBuffer() {
         channel.trySend(PipelineMessage.Command("ClearBuffer"))
     }
-    
+
     fun release() {
         channel.close()
         clearBuffer()

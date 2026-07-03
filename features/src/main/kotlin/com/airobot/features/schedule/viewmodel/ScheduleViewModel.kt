@@ -2,10 +2,14 @@ package com.airobot.features.schedule.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.airobot.features.aiserv.guidance.RemindEngine
+import com.airobot.features.aiserv.guidance.data.RemindCard
+import com.airobot.features.FeatureCards
 import com.airobot.features.schedule.data.ScheduleRepository
 import com.airobot.features.schedule.data.model.ScheduleItem
 import com.airobot.features.schedule.data.model.TodoItem
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,8 +23,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ScheduleViewModel @Inject constructor(
-    private val repository: ScheduleRepository
+    private val repository: ScheduleRepository,
+    private val remindEngine: RemindEngine
 ) : ViewModel() {
+
+    /** Schedule-specific remind cards filtered by schedule-related overlay tags. */
+    val remindCards: Flow<List<RemindCard>> = remindEngine.getRemindCards(
+        listOf(FeatureCards.SCHEDULE_PLANNER, FeatureCards.LOGBOOK, FeatureCards.FOCUS)
+    )
 
     private val _schedules = MutableStateFlow<List<ScheduleItem>>(emptyList())
     val schedules: StateFlow<List<ScheduleItem>> = _schedules.asStateFlow()

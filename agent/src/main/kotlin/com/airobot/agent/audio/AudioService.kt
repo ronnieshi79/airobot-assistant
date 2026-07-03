@@ -1,5 +1,6 @@
-package com.airobot.agent
+package com.airobot.agent.audio
 
+import android.media.AudioFormat
 import kotlinx.coroutines.flow.SharedFlow
 
 /**
@@ -30,11 +31,11 @@ data class AudioConfig(
     val recordSampleRate: Int = 16000,
     val playSampleRate: Int = 24000,
     val channels: Int = 1,
-    val audioFormat: Int = android.media.AudioFormat.ENCODING_PCM_16BIT,
+    val audioFormat: Int = AudioFormat.ENCODING_PCM_16BIT,
     val frameDurationMs: Int = 60, // Frame duration, default 60ms
     val enableAec: Boolean = true,
     val enableNs: Boolean = true,
-    
+
     // AI VAD Configurations (Silero ONNX)
     val vadThreshold: Float = 0.5f,
     val vadMinSpeechDuration: Float = 0.15f,

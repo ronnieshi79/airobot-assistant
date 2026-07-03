@@ -6,7 +6,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import com.airobot.agent.AudioConfig
+import com.airobot.agent.audio.AudioConfig
 import com.airobot.agent.audio.tools.codec.OpusDecoder
 
 /**
@@ -37,8 +37,14 @@ class DefaultAudioPlayer(private val context: Context) : AudioPlayer {
         this.config = config
         return try {
             // Initialize Opus decoder
-            opusDecoder = OpusDecoder(config.playSampleRate, config.channels, config.frameDurationMs)
-            streamPlayer = AudioStreamPlayer(config.playSampleRate, config.channels, config.frameDurationMs, context)
+            opusDecoder =
+                OpusDecoder(config.playSampleRate, config.channels, config.frameDurationMs)
+            streamPlayer = AudioStreamPlayer(
+                config.playSampleRate,
+                config.channels,
+                config.frameDurationMs,
+                context
+            )
 
             startDecodeLoop()
 

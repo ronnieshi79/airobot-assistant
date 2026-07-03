@@ -1,4 +1,4 @@
-﻿package com.airobot.framework.layout
+package com.airobot.framework.layout
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -75,20 +75,31 @@ fun SystemDrawer(
                     .width(100.dp)
                     .fillMaxHeight()
                     .background(RobotTheme.colors.surfaceOverlay.copy(alpha = if (RobotTheme.isDark) 0.05f else 0.1f))
-                    .padding(vertical = 40.dp),
+                    .padding(vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                menuItems.forEachIndexed { index, item ->
-                    DrawerMenuItem(
-                        icon = item.icon,
-                        label = item.label,
-                        isSelected = selectedTab == index,
-                        onClick = { selectedTab = index }
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
+                // Scrollable container for the main menu items
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    menuItems.forEachIndexed { index, item ->
+                        DrawerMenuItem(
+                            icon = item.icon,
+                            label = item.label,
+                            isSelected = selectedTab == index,
+                            onClick = { selectedTab = index }
+                        )
+                        if (index < menuItems.lastIndex) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                    }
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 DrawerMenuItem(
                     icon = Icons.Default.Language,
@@ -108,7 +119,7 @@ fun SystemDrawer(
                     }
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 DrawerMenuItem(
                     icon = if (RobotTheme.isDark) Icons.Default.WbSunny else Icons.Default.NightsStay,

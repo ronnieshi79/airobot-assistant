@@ -1,4 +1,4 @@
-﻿package com.airobot.core.comm.transport
+package com.airobot.core.comm.transport
 
 import android.content.Context
 import android.util.Log
@@ -80,13 +80,17 @@ class SingletonWebSocket(context: Context) {
     /**
      * 连接WebSocket
      */
-    fun connect(url: String, deviceId: String, clientId: String, token: String) {
+    fun connect(url: String, deviceId: String, clientId: String, token: String, resetRetry: Boolean = true) {
         // 如果正在连接或连接正常工作，且是同一个连接，则不需要发起连接，直接返回
         if (webSocketSingleton != null
-            && currentState == SocketState.CONNECTED
-            && currentState == SocketState.CONNECTING
+            && (currentState == SocketState.CONNECTED || currentState == SocketState.CONNECTING)
             && webSocketSingleton!!.request().url.toString() == url){
             return
+        }
+
+        if (resetRetry) {
+            currentRetryAttempt = 0
+            Log.d(TAG, "Initiating fresh connection, resetting retry attempt counter to 0")
         }
 
         // 在发起新连接前，取消任何旧的或正在尝试的重连接，确保连接唯一性
@@ -197,7 +201,7 @@ class SingletonWebSocket(context: Context) {
             Log.d(TAG, "将在 ${delayMs}ms 后进行第 ${currentRetryAttempt} 次重连尝试")
             delay(delayMs)
             connect(lastUrl!!, lastDeviceId!!,
-                clientId = lastClientId!!, lastToken!!)
+                clientId = lastClientId!!, lastToken!!, resetRetry = false)
         }
     }
 

@@ -1,6 +1,6 @@
 package com.airobot.agent.di
 
-import com.airobot.agent.AudioService
+import com.airobot.agent.audio.AudioService
 import com.airobot.agent.audio.AudioServiceImpl
 import dagger.Binds
 import dagger.Module

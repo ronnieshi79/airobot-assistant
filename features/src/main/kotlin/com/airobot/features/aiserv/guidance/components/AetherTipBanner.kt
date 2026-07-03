@@ -1,4 +1,4 @@
-package com.airobot.features.aiserv.guidance
+package com.airobot.features.aiserv.guidance.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

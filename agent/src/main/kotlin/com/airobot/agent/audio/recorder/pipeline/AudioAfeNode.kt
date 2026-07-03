@@ -1,6 +1,6 @@
 package com.airobot.agent.audio.recorder.pipeline
 
-import com.airobot.agent.AudioEvent
+import com.airobot.agent.audio.AudioEvent
 import com.airobot.agent.audio.tools.afe.AfeManager
 import com.airobot.agent.audio.tools.afe.AfeResult
 import com.airobot.agent.audio.tools.afe.AudioCalculator
@@ -14,7 +14,8 @@ class AudioAfeNode(
     private val afeManager: AfeManager,
     private val events: MutableSharedFlow<AudioEvent>
 ) {
-    private val channel = Channel<ByteArray>(capacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val channel =
+        Channel<ByteArray>(capacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     fun start(scope: CoroutineScope, onResult: suspend (AfeResult) -> Unit) {
         scope.launch {
@@ -22,10 +23,10 @@ class AudioAfeNode(
                 // 1. RMS -> emit to events
                 val audioLevel = AudioCalculator.calculateRmsLevel(pcmData)
                 events.emit(AudioEvent.VoiceLevel(audioLevel))
-                
+
                 // 2. AFE Gate / VAD Processing
                 val afeResult = afeManager.processFrame(pcmData)
-                
+
                 // Callback to router
                 onResult(afeResult)
             }

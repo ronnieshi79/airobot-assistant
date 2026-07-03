@@ -3,7 +3,7 @@ package com.airobot.features.schedule.routes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.airobot.features.aiserv.popup.OverlayTags
+import com.airobot.features.FeatureCards
 import com.airobot.features.schedule.cards.ScheduleBoardCard
 import com.airobot.features.schedule.cards.ScheduleHomeCard
 import com.airobot.features.schedule.cards.ScheduleListCard
@@ -22,9 +22,9 @@ fun ScheduleHomeRoute(
         onNavigateToBoard = onNavigateToBoard,
         onRemindClick = { action ->
             when (action) {
-                "schedule" -> onShowOverlay(OverlayTags.SCHEDULE_PLANNER)
-                "logbook" -> onShowOverlay(OverlayTags.LOGBOOK)
-                "focus" -> onShowOverlay(OverlayTags.TIMER)
+                "schedule" -> onShowOverlay(FeatureCards.SCHEDULE_PLANNER)
+                "logbook" -> onShowOverlay(FeatureCards.LOGBOOK)
+                "focus" -> onShowOverlay(FeatureCards.TIMER)
             }
         }
     )
@@ -41,9 +41,9 @@ fun ScheduleBoardRoute(
         scheduleViewModel = scheduleViewModel,
         onRemindClick = { action ->
             when (action) {
-                "schedule" -> onShowOverlay(OverlayTags.SCHEDULE_PLANNER)
-                "logbook" -> onShowOverlay(OverlayTags.LOGBOOK)
-                "focus" -> onShowOverlay(OverlayTags.TIMER)
+                "schedule" -> onShowOverlay(FeatureCards.SCHEDULE_PLANNER)
+                "logbook" -> onShowOverlay(FeatureCards.LOGBOOK)
+                "focus" -> onShowOverlay(FeatureCards.TIMER)
             }
         }
     )
@@ -60,9 +60,9 @@ fun ScheduleListRoute(
         scheduleViewModel = scheduleViewModel,
         onRemindClick = { action ->
             when (action) {
-                "schedule" -> onShowOverlay(OverlayTags.SCHEDULE_PLANNER)
-                "logbook" -> onShowOverlay(OverlayTags.LOGBOOK)
-                "focus" -> onShowOverlay(OverlayTags.TIMER)
+                "schedule" -> onShowOverlay(FeatureCards.SCHEDULE_PLANNER)
+                "logbook" -> onShowOverlay(FeatureCards.LOGBOOK)
+                "focus" -> onShowOverlay(FeatureCards.TIMER)
             }
         }
     )

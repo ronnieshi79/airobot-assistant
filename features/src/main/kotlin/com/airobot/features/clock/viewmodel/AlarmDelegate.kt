@@ -12,7 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import com.airobot.features.aiserv.event.AiEvent
 import com.airobot.features.aiserv.event.AiEventDispatcher
-import com.airobot.features.aiserv.popup.OverlayTags
+import com.airobot.features.FeatureCards
 import com.airobot.features.aiserv.popup.PopupQueueService
 import com.airobot.features.aiserv.popup.PopupServiceItem
 import com.airobot.features.clock.cards.AlarmOverlay
@@ -268,7 +268,7 @@ class AlarmDelegate @Inject constructor(
         val data: AlarmServiceData
     ) : PopupServiceItem() {
         override val id: String = "alarm_${data.alarmId}"
-        override val serviceType: String = OverlayTags.ALARM
+        override val serviceType: String = FeatureCards.ALARM
         override val displayName: String = data.label.take(4)
 
         override val priority: Int = if (data.isForeground) {
