@@ -231,12 +231,13 @@ fun AppMainScreen(
         ) {
             BackgroundDecorations()
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    // 为了防止状态栏遮挡，顶部留出一定空间
-            ) {
+            if (activeCharacter != null) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        // 为了防止状态栏遮挡，顶部留出一定空间
+                ) {
                 val stateText = when (robotState) {
                     is RobotState.Offline -> "OFFLINE"
                     is RobotState.Initializing -> "INITIALIZING"
@@ -378,20 +379,21 @@ fun AppMainScreen(
                 }
             }
 
-            // 底部页脚
-            BottomFooter(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .navigationBarsPadding()
-            )
-
-            // 激活弹窗
-            if (showActivationDialog && activationCode != null) {
-                AiRobotDialog(
-                    activationCode = activationCode!!,
-                    onConfirm = { mainShellViewModel.onActivationConfirmed() },
-                    onDismiss = { /* Optionally handle dismissal, but usually activation is required */ }
+                // 底部页脚
+                BottomFooter(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .navigationBarsPadding()
                 )
+
+                // 激活弹窗
+                if (showActivationDialog && activationCode != null) {
+                    AiRobotDialog(
+                        activationCode = activationCode!!,
+                        onConfirm = { mainShellViewModel.onActivationConfirmed() },
+                        onDismiss = { /* Optionally handle dismissal, but usually activation is required */ }
+                    )
+                }
             }
         }
     }
