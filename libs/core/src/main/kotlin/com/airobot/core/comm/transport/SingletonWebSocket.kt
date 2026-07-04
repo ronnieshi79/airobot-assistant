@@ -51,8 +51,9 @@ class SingletonWebSocket(context: Context) {
         private const val NORMAL_CLOSE_CODE = 1000
         private const val BASE_RECONNECT_DELAY = 2000L
         private const val MAX_RECONNECT_DELAY = 60000L // 最大重连延迟60秒
-        private const val CONNECT_TIMEOUT = 15L 
-        private const val WRITE_TIMEOUT = 15L 
+        private const val CONNECT_TIMEOUT = 15L
+        private const val WRITE_TIMEOUT = 15L
+        private const val PING_INTERVAL = 20L
     }
 
     // 一个非静态伪单例ws，设置连接状态确保同时只有一个连接，并启用Ping/Pong保持长连接
@@ -65,7 +66,7 @@ class SingletonWebSocket(context: Context) {
         .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
         .readTimeout(0, TimeUnit.SECONDS)
         .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
-        .pingInterval(30, TimeUnit.SECONDS)
+        .pingInterval(PING_INTERVAL, TimeUnit.SECONDS)
         .build()
 
     // 采用自动的重连机制，内建重连唯一性机制，确保单一连接稳定性
@@ -95,6 +96,7 @@ class SingletonWebSocket(context: Context) {
 
         // 在发起新连接前，取消任何旧的或正在尝试的重连接，确保连接唯一性
         webSocketSingleton?.cancel()
+        webSocketSingleton = null
         reconnectJob?.cancel()
         currentState = SocketState.CONNECTING
         Log.d(TAG, "正在连接WebSocket: $url")
@@ -114,6 +116,7 @@ class SingletonWebSocket(context: Context) {
             .build()
         webSocketSingleton = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
+                if (webSocket != webSocketSingleton) return
                 // 连接成功，设置状态，重置重连计数器，取消可能的重连任务
                 currentState = SocketState.CONNECTED
                 currentRetryAttempt = 0
@@ -127,6 +130,7 @@ class SingletonWebSocket(context: Context) {
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
+                if (webSocket != webSocketSingleton) return
                 Log.d(TAG, "收到文本消息: $text")
                 scope.launch {
                     _events.emit(WebSocketEvent.TextMessage(text))
@@ -134,6 +138,7 @@ class SingletonWebSocket(context: Context) {
             }
 
             override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+                if (webSocket != webSocketSingleton) return
                 Log.d(TAG, "收到二进制消息，长度: ${bytes.size}")
                 scope.launch {
                     _events.emit(WebSocketEvent.BinaryMessage(bytes.toByteArray()))
@@ -141,7 +146,8 @@ class SingletonWebSocket(context: Context) {
             }
 
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-                Log.d(TAG, "WebSocket正在关闭: $code - $reason")
+                if (webSocket != webSocketSingleton) return
+                Log.d(TAG, "服务器通知WebSocket正在关闭: $code - $reason")
 
                 // 收到服务器关闭，立即关闭而不是等待超时（不要使用close协商导致onClosed重复响应）
                 webSocket.cancel()
@@ -152,7 +158,8 @@ class SingletonWebSocket(context: Context) {
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                Log.d(TAG, "WebSocket已关闭: $code - $reason")
+                if (webSocket != webSocketSingleton) return
+                Log.d(TAG, "服务器通知WebSocket已关闭: $code - $reason")
 
                 // 如果正常关闭连接，不用强制重连，等待上层重连
                 if (NORMAL_CLOSE_CODE == code) {
@@ -167,7 +174,15 @@ class SingletonWebSocket(context: Context) {
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                Log.e(TAG, "WebSocket连接失败：抛出异常", t)
+                if (webSocket != webSocketSingleton) {
+                    // 忽略旧连接的错误回调
+                    Log.w(TAG, "忽略旧连接的Failure回调: ${t.message}")
+                    return
+                }
+
+                val errorCode = response?.code ?: -1
+                val errorMessage = response?.message ?: "N/A"
+                Log.e(TAG, "WebSocket连接失败: code=$errorCode, message=$errorMessage, exception=${t.message}", t)
 
                 // 连接失败情况下，需要立即避退重连
                 reconnectWithBackoff()
@@ -183,9 +198,9 @@ class SingletonWebSocket(context: Context) {
      */
     private fun reconnectWithBackoff() {
         // 如果已有重连任务在跑，就不要再启动新的了，确保不并发
-        if (!reconnectModel || lastUrl == null
-            || lastDeviceId == null || lastToken == null
-            || reconnectJob?.isActive == true) {
+        if (!reconnectModel || lastUrl == null || lastDeviceId == null ||
+            lastClientId == null || lastToken == null ||
+            reconnectJob?.isActive == true) {
             return
         }
         Log.d(TAG, "连接失败/丢失，准备自动避退重连...")
