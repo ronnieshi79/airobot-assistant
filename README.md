@@ -9,7 +9,9 @@
 ![API](https://img.shields.io/badge/API-24%2B-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-purple?style=for-the-badge)
 
-**基于多智能体平台、极具生命力的动画互动与全语音交互 airobot 系统**
+🌐 **[简体中文](README.md) | [English](README_en.md)**
+
+**基于多智能体平台、极具生命力的动画互动与全语音交互 airobot系统**
 
 [📖 项目简介](#-项目简介) • [✨ 核心功能](#-核心功能) • [📱 应用场景](#-应用场景) • [🔖 使用方法](#-使用方法) • [🚀 开发指南](#-开发指南) • [🌍 Ai机器人社区](#-ai机器人社区)
 

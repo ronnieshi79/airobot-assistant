@@ -1,5 +1,7 @@
 # Contributing to AiRobot Assistant
 
+🌐 **[简体中文](CONTRIBUTING.md) | [English](CONTRIBUTING_en.md)**
+
 We are committed to bringing "digital life" into the real world through the power of open source. Whether you are an experienced developer or an AI enthusiast, every contribution you make will drive AiRobot towards a more vibrant future.
 
 Thank you for your interest in AiRobot Assistant! We welcome all forms of contribution, including bug fixes, documentation improvements, new feature proposals, and sharing use cases.

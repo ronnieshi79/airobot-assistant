@@ -9,6 +9,8 @@
 ![API](https://img.shields.io/badge/API-24%2B-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-purple?style=for-the-badge)
 
+🌐 **[简体中文](README.md) | [English](README_en.md)**
+
 **An energetic animated interactive and full voice interaction airobot system based on multi-agent platforms**
 
 [📖 Introduction](#-introduction) • [✨ Core Features](#-core-features) • [📱 Application Scenarios](#-application-scenarios) • [🔖 How to Use](#-how-to-use) • [🚀 Development Guide](#-development-guide) • [🌍 AiRobot Community](#-airobot-community)

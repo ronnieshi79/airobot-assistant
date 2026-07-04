@@ -1,5 +1,6 @@
 # Contributing to AiRobot Assistant
 
+🌐 **[简体中文](CONTRIBUTING.md) | [English](CONTRIBUTING_en.md)**
 
 我们致力于通过开源的力量，让“数字生命”走进真实世界。无论你是经验丰富的开发者，还是对 AI 机器人充满热情的爱好者，你的每一份贡献都将推动 AiRobot 向着更有生命力的方向迈进。
 
