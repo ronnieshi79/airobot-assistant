@@ -6,6 +6,7 @@ import com.airobot.features.aiserv.event.AiEvent
 import com.airobot.features.aiserv.event.AiEventDispatcher
 import com.airobot.features.aiserv.popup.OverlayCoordinator
 import com.airobot.features.FeatureCards
+import com.airobot.features.R
 import com.airobot.features.podcast.data.PodcastRepository
 import com.airobot.features.podcast.data.model.PodcastEpisode
 import com.airobot.features.podcast.service.PlaybackState
@@ -15,8 +16,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -47,6 +51,9 @@ class PodcastPlaybackDelegate @Inject constructor(
     private val _progress = MutableStateFlow(0f)
     val progress: StateFlow<Float> = _progress.asStateFlow()
 
+    private val _playbackError = MutableSharedFlow<Int>(extraBufferCapacity = 1)
+    val playbackError: SharedFlow<Int> = _playbackError.asSharedFlow()
+
     val realPlaybackState: StateFlow<PlaybackState> = playbackService.playbackState
 
     fun getPlayer(): Player? = playbackService.getPlayer()
@@ -66,6 +73,25 @@ class PodcastPlaybackDelegate @Inject constructor(
 
     init {
         observeRealPlayback()
+        delegateScope.launch {
+            dataDelegate.episodes.collect { eps ->
+                if (_activeEpisode.value == null && eps.isNotEmpty()) {
+                    val firstReal = eps.firstOrNull { it.isDiy && !it.mediaUri.isNullOrEmpty() }
+                    if (firstReal != null) {
+                        _activeEpisode.value = firstReal
+                        _progress.value = firstReal.progress
+                        Log.d(TAG, "Pre-populated activeEpisode with first real DIY episode: ${firstReal.title}")
+                    } else {
+                        val firstPreset = eps.firstOrNull()
+                        if (firstPreset != null) {
+                            _activeEpisode.value = firstPreset
+                            _progress.value = firstPreset.progress
+                            Log.d(TAG, "Pre-populated activeEpisode with first preset episode: ${firstPreset.title}")
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun observeRealPlayback() {
@@ -185,9 +211,14 @@ class PodcastPlaybackDelegate @Inject constructor(
     fun togglePlay() {
         val currentActive = _activeEpisode.value
         if (currentActive == null) {
-            val firstEpisode = dataDelegate.episodes.value.firstOrNull()
+            val firstEpisode = dataDelegate.episodes.value.firstOrNull { it.isDiy && !it.mediaUri.isNullOrEmpty() }
             if (firstEpisode != null) {
                 playEpisode(firstEpisode)
+            } else {
+                val fallback = dataDelegate.episodes.value.firstOrNull()
+                if (fallback != null) {
+                    playEpisode(fallback)
+                }
             }
             return
         }
@@ -202,40 +233,8 @@ class PodcastPlaybackDelegate @Inject constructor(
                 Log.d(TAG, "togglePlay: resumed real playback for ${currentActive.title}")
             }
         } else {
-            val nextPlaying = !_isPlaying.value
-            _isPlaying.value = nextPlaying
-            Log.d(TAG, "togglePlay: isPlaying=$nextPlaying (demo), episode=${currentActive.title}")
-            if (nextPlaying) {
-                sessionStartTimestamp = System.currentTimeMillis()
-                eventDispatcher.dispatch(
-                    AiEvent.PodcastPlaybackStarted(
-                        episodeId = currentActive.id,
-                        title = currentActive.title,
-                        type = currentActive.type,
-                        channelName = currentActive.channelName,
-                        resumePositionMs = (currentActive.progress / 100f * 300_000f).toLong(), // Simulated
-                        timestamp = sessionStartTimestamp
-                    )
-                )
-                startTicker()
-            } else {
-                if (sessionStartTimestamp > 0L) {
-                    val listened = System.currentTimeMillis() - sessionStartTimestamp
-                    eventDispatcher.dispatch(
-                        AiEvent.PodcastPlaybackStopped(
-                            episodeId = currentActive.id,
-                            title = currentActive.title,
-                            type = currentActive.type,
-                            channelName = currentActive.channelName,
-                            progressPercent = _progress.value,
-                            listenedMs = listened,
-                            timestamp = System.currentTimeMillis(),
-                            reason = "user_paused"
-                        )
-                    )
-                    sessionStartTimestamp = 0L
-                }
-                stopTicker()
+            delegateScope.launch {
+                _playbackError.emit(R.string.podcast_error_invalid_demo_data)
             }
         }
     }
@@ -269,16 +268,25 @@ class PodcastPlaybackDelegate @Inject constructor(
         val updatedEpisode = episode.copy(playCount = episode.playCount + 1)
         _activeEpisode.value = updatedEpisode
         _progress.value = updatedEpisode.progress
-        _isPlaying.value = true
-        wasLastCompleted = false
 
-        val updatedEpisodes = dataDelegate.episodes.value.map { ep ->
-            if (ep.id == episode.id) updatedEpisode else ep
-        }
-        dataDelegate.updateEpisodesState(updatedEpisodes)
-        delegateScope.launch { repository.saveEpisodes(updatedEpisodes) }
+        val isDemo = !episode.isDiy || episode.mediaUri.isNullOrEmpty()
+        if (isDemo) {
+            _isPlaying.value = false
+            val updatedEpisodes = dataDelegate.episodes.value.map { ep ->
+                if (ep.id == episode.id) updatedEpisode else ep
+            }
+            dataDelegate.updateEpisodesState(updatedEpisodes)
+            delegateScope.launch { repository.saveEpisodes(updatedEpisodes) }
+        } else {
+            _isPlaying.value = true
+            wasLastCompleted = false
 
-        if (episode.isDiy && episode.mediaUri != null) {
+            val updatedEpisodes = dataDelegate.episodes.value.map { ep ->
+                if (ep.id == episode.id) updatedEpisode else ep
+            }
+            dataDelegate.updateEpisodesState(updatedEpisodes)
+            delegateScope.launch { repository.saveEpisodes(updatedEpisodes) }
+
             // Real media playback via Media3
             playbackService.play(
                 episodeId = episode.id,
@@ -290,20 +298,6 @@ class PodcastPlaybackDelegate @Inject constructor(
                 TAG,
                 "Started real playback: uri=${episode.mediaUri}, resume=${episode.lastPositionMs}ms"
             )
-        } else {
-            // Demo episode: simulated ticker
-            sessionStartTimestamp = System.currentTimeMillis()
-            eventDispatcher.dispatch(
-                AiEvent.PodcastPlaybackStarted(
-                    episodeId = episode.id,
-                    title = episode.title,
-                    type = episode.type,
-                    channelName = episode.channelName,
-                    resumePositionMs = (episode.progress / 100f * 300_000f).toLong(), // Simulated
-                    timestamp = sessionStartTimestamp
-                )
-            )
-            startTicker()
         }
     }
 
@@ -426,7 +420,8 @@ class PodcastPlaybackDelegate @Inject constructor(
     fun getRecommendedEpisodes(type: String? = null): List<PodcastEpisode> {
         val strategy = DefaultPodcastRecommendationStrategy()
         val allEpisodes = dataDelegate.episodes.value
-        val recommended = strategy.recommend(allEpisodes, _activeEpisode.value, _isPlaying.value)
+        val realEpisodes = allEpisodes.filter { it.isDiy && !it.mediaUri.isNullOrEmpty() }
+        val recommended = strategy.recommend(realEpisodes, _activeEpisode.value, _isPlaying.value)
 
         val normalized = when (type?.trim()?.lowercase()) {
             "audio", "音频" -> "audio"
@@ -448,6 +443,39 @@ class PodcastPlaybackDelegate @Inject constructor(
         }
     }
 
+    fun getNextEpisodeOf(type: String? = null): PodcastEpisode? {
+        val allEpisodes = dataDelegate.episodes.value
+        val realEpisodes = allEpisodes.filter { it.isDiy && !it.mediaUri.isNullOrEmpty() }
+        if (realEpisodes.isEmpty()) return null
+
+        val normalized = when (type?.trim()?.lowercase()) {
+            "audio", "音频" -> "audio"
+            "video", "视频" -> "video"
+            else -> null
+        }
+
+        val filteredEpisodes = if (normalized != null) {
+            realEpisodes.filter { ep ->
+                val epType = ep.type.trim().lowercase()
+                if (normalized == "audio") {
+                    epType == "audio" || epType == "音频"
+                } else {
+                    epType == "video" || epType == "视频"
+                }
+            }
+        } else {
+            realEpisodes
+        }
+
+        if (filteredEpisodes.isEmpty()) return null
+
+        val active = _activeEpisode.value
+        val index = if (active != null) filteredEpisodes.indexOfFirst { it.id == active.id } else -1
+
+        val nextIndex = if (index != -1) (index + 1) % filteredEpisodes.size else 0
+        return filteredEpisodes[nextIndex]
+    }
+
     fun playRecommended(type: String? = null): Boolean {
         Log.d(TAG, "playRecommended: type=$type")
         val active = _activeEpisode.value
@@ -459,7 +487,7 @@ class PodcastPlaybackDelegate @Inject constructor(
         }
 
         // If an episode of correct type is active, just make sure overlay is shown and resume
-        if (active != null) {
+        if (active != null && active.isDiy && !active.mediaUri.isNullOrEmpty()) {
             val activeType = active.type.trim().lowercase()
             val matchesType = normalized == null ||
                 if (normalized == "audio") {
@@ -471,35 +499,34 @@ class PodcastPlaybackDelegate @Inject constructor(
                 overlayCoordinator.showOverlay(FeatureCards.PODCAST)
                 if (!_isPlaying.value) {
                     resume()
+                    return true
+                } else {
+                    val nextEpisode = getNextEpisodeOf(type)
+                    if (nextEpisode != null) {
+                        playEpisode(nextEpisode)
+                        return true
+                    }
                 }
-                return true
             }
         }
 
         // Otherwise find first recommended episode of correct type
-        val recommended = getRecommendedEpisodes(type)
-        if (recommended.isEmpty()) {
+        val nextEpisode = getNextEpisodeOf(type)
+        if (nextEpisode == null) {
             Log.w(TAG, "playRecommended: recommended list is empty for type=$type")
             return false
         }
         overlayCoordinator.showOverlay(FeatureCards.PODCAST)
-        playEpisode(recommended.first())
+        playEpisode(nextEpisode)
         return true
     }
 
     fun playNext(type: String? = null): Boolean {
         Log.d(TAG, "playNext: type=$type")
-        val recommended = getRecommendedEpisodes(type)
-        if (recommended.isEmpty()) {
+        val nextEpisode = getNextEpisodeOf(type)
+        if (nextEpisode == null) {
             Log.w(TAG, "playNext: recommended list is empty for type=$type")
             return false
-        }
-        val active = _activeEpisode.value
-        val index = if (active != null) recommended.indexOfFirst { it.id == active.id } else -1
-        val nextEpisode = if (index != -1 && index + 1 < recommended.size) {
-            recommended[index + 1]
-        } else {
-            recommended.first()
         }
         overlayCoordinator.showOverlay(FeatureCards.PODCAST)
         playEpisode(nextEpisode)
@@ -540,21 +567,33 @@ class PodcastPlaybackDelegate @Inject constructor(
         if (_isPlaying.value) return // already playing
 
         if (currentActive.isDiy && currentActive.mediaUri != null) {
-            playbackService.resume()
-        } else {
-            _isPlaying.value = true
-            sessionStartTimestamp = System.currentTimeMillis()
-            eventDispatcher.dispatch(
-                AiEvent.PodcastPlaybackStarted(
+            val playerState = playbackService.playbackState.value
+            val isStopped = playerState.activeEpisodeId == null
+            val exo = playbackService.getPlayer()
+            val isIdleOrEnded = exo == null || exo.playbackState == Player.STATE_IDLE || exo.playbackState == Player.STATE_ENDED
+
+            if (isStopped || isIdleOrEnded) {
+                // If it ended or is stopped, we should play/re-prepare it
+                val isEndedState = exo?.playbackState == Player.STATE_ENDED || currentActive.progress >= 95f
+                val startPos = if (isEndedState) 0L else currentActive.lastPositionMs
+                if (isEndedState) {
+                    _progress.value = 0f
+                    _activeEpisode.value = currentActive.copy(progress = 0f, lastPositionMs = 0L)
+                }
+                playbackService.play(
                     episodeId = currentActive.id,
-                    title = currentActive.title,
-                    type = currentActive.type,
-                    channelName = currentActive.channelName,
-                    resumePositionMs = (currentActive.progress / 100f * 300_000f).toLong(), // Simulated
-                    timestamp = sessionStartTimestamp
+                    mediaUri = currentActive.mediaUri,
+                    startPositionMs = startPos
                 )
-            )
-            startTicker()
+                _isPlaying.value = true
+                wasLastCompleted = false
+            } else {
+                playbackService.resume()
+            }
+        } else {
+            delegateScope.launch {
+                _playbackError.emit(R.string.podcast_error_invalid_demo_data)
+            }
         }
     }
 

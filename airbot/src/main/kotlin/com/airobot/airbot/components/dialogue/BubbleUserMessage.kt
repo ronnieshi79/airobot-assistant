@@ -26,7 +26,7 @@ import com.airobot.framework.theme.RobotTheme
  * 用户输入气泡组件 - 增强设计版，单独的对话输入气泡
  */
 @Composable
-internal fun BubbleUserMessage(
+fun BubbleUserMessage(
     message: String,
     modifier: Modifier = Modifier
 ) {

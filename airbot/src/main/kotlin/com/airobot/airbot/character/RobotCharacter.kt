@@ -1,13 +1,10 @@
 package com.airobot.airbot.character
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -43,11 +40,7 @@ fun RobotCharacter(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
-            modifier = Modifier
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ) { onRobotClick() },
+            modifier = Modifier,
             contentAlignment = Alignment.Center
         ) {
             when (characterType) {
@@ -81,7 +74,9 @@ fun RobotCharacter(
                         RiveCharacter(
                             state = state,
                             roleName = roleName,
-                            audioLevel = if (state == RobotVisualState.SPEAKING) audioLevel else { { 0f } },
+                            audioLevel = if (state == RobotVisualState.SPEAKING) audioLevel else {
+                                { 0f }
+                            },
                             modifier = Modifier
                                 .fillMaxSize()
                                 .graphicsLayer {

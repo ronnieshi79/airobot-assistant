@@ -28,7 +28,6 @@ class DefaultPodcastRecommendationStrategy : PodcastRecommendationStrategy {
         isPlaying: Boolean
     ): List<PodcastEpisode> {
         return episodes
-            .filter { !it.played || it.favorite }
             .map { ep ->
                 var score = 0f
                 

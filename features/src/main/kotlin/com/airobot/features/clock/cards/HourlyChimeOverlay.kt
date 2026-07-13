@@ -108,7 +108,8 @@ fun HourlyChimeOverlay(
         onClose = onClose,
         enabled = !isChiming,
         backdropAlpha = backdropAlpha,
-        clickThrough = clickThrough
+        clickThrough = clickThrough,
+        isKeepAlive = isChiming
     ) {
         Box(
             modifier = modifier.fillMaxSize(),

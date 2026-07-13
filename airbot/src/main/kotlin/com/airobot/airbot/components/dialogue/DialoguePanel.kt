@@ -53,7 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.airobot.airbot.R
-import com.airobot.airbot.domain.model.Message
+import com.airobot.agent.brain.model.Message
 import com.airobot.airbot.viewmodel.RobotVisualState
 import com.airobot.framework.theme.RobotTheme
 import kotlinx.coroutines.launch

@@ -7,7 +7,6 @@
     <string name="aether_state_speaking">AETHER SPEAKING</string>
     <string name="aether_state_ready">AETHER READY</string>
     <string name="aether_system_label">AETHER SYSTEM</string>
-    <string name="dialogue_system_interrupted">User interrupted speaking</string>
     <string name="common_close">Close</string>
 
     <!-- Voice Input -->

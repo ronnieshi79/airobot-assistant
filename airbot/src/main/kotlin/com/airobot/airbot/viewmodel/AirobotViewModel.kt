@@ -2,8 +2,7 @@ package com.airobot.airbot.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.airobot.agent.audio.AudioEvent
-import com.airobot.agent.audio.AudioService
+import com.airobot.agent.brain.AiBrain
 import com.airobot.airbot.api.AirbotCharacterApi
 import com.airobot.airbot.api.AirbotEngineApi
 import com.airobot.airbot.domain.model.AirbotServiceSubState
@@ -11,12 +10,10 @@ import com.airobot.airbot.domain.model.CharacterType
 import com.airobot.airbot.domain.model.ConversationSubState
 import com.airobot.airbot.domain.model.RobotState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -27,26 +24,14 @@ import javax.inject.Inject
 class AirobotViewModel @Inject constructor(
     robotStateEngine: AirbotEngineApi,
     characterManager: AirbotCharacterApi,
-    audioService: AudioService
+    aiBrain: AiBrain
 ) : ViewModel() {
-
-    private val _voiceLevel = MutableStateFlow(0f)
-
-    init {
-        viewModelScope.launch {
-            audioService.events.collect { event ->
-                if (event is AudioEvent.VoiceLevel) {
-                    _voiceLevel.value = event.level
-                }
-            }
-        }
-    }
 
     val uiState: StateFlow<RobotUiState> = combine(
         robotStateEngine.robotState,
         robotStateEngine.idleVisualState,
         characterManager.activeCharacter,
-        _voiceLevel
+        aiBrain.audioLevel
     ) { engineState, idleVisual, activeRole, voiceLevel ->
         val visualState = when (engineState) {
             is RobotState.Offline -> RobotVisualState.SLEEPING

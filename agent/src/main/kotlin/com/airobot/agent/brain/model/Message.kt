@@ -1,4 +1,4 @@
-package com.airobot.airbot.domain.model
+package com.airobot.agent.brain.model
 
 import java.util.UUID
 

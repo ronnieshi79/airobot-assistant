@@ -65,7 +65,8 @@ fun BubbleAiDialogue(
     aiMsg: String?,
     onAiSpeechComplete: () -> Unit,
     onClose: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    bubbleMaxWidth: androidx.compose.ui.unit.Dp = 360.dp
 ) {
     val scrollState = rememberScrollState()
     val showBubble = robotState == RobotVisualState.THINKING ||
@@ -89,7 +90,7 @@ fun BubbleAiDialogue(
             // 气泡主体
             Box(
                 modifier = Modifier
-                    .width(360.dp)
+                    .width(bubbleMaxWidth)
                     .shadow(
                         elevation = 8.dp,
                         shape = RoundedCornerShape(32.dp),

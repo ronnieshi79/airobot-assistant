@@ -1,265 +1,406 @@
 package com.airobot.agent.brain.xiaozhi
 
+import android.content.Context
 import android.util.Log
+import com.airobot.agent.audio.AudioEvent
 import com.airobot.agent.audio.AudioService
 import com.airobot.agent.brain.AiBrain
 import com.airobot.agent.brain.BrainState
-import com.airobot.agent.skills.SkillManager
-import com.airobot.agent.skills.SkillResult
+import com.airobot.agent.brain.mcp.McpHandler
+import com.airobot.agent.brain.model.Message
+import com.airobot.agent.brain.model.MessageRole
+import com.airobot.agent.brain.session.ConversationSession
 import com.airobot.core.comm.NetCommEvent
 import com.airobot.core.comm.NetCommService
 import com.google.gson.Gson
-import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.airobot.agent.manager.AgentManager
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Xiaozhi cloud AI proxy — acts as the AiBrain implementation for the
- * Xiaozhi cloud agent. Handles MCP JSON-RPC protocol, dispatches tool calls
- * to the local SkillManager, and drives BrainState from cloud events.
+ * Xiaozhi cloud AI proxy — acts as the AiBrain implementation for the Xiaozhi cloud agent.
+ * Handles WebSocket connection packets, AEC/VAD audio routing, and standardizes MCP request dispatching.
  */
 @Singleton
 class XiaozhiCloudBrain @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val netCommService: NetCommService,
-    private val skillManager: SkillManager,
     private val audioService: AudioService,
-    private val gson: Gson
+    private val gson: Gson,
+    private val mcpHandler: McpHandler,
+    private val session: ConversationSession,
+    private val configManager: AgentManager
 ) : AiBrain {
 
     companion object {
         private const val TAG = "XiaozhiCloudBrain"
-        private const val MCP_PROTOCOL_VERSION = "2024-11-05"
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val _brainState = MutableStateFlow(BrainState.IDLE)
-    override val brainState: StateFlow<BrainState> = _brainState.asStateFlow()
+    // Delegate State Flows to ConversationSession
+    override val brainState: StateFlow<BrainState> = session.brainState
+    override val messages: StateFlow<List<Message>> = session.messages
+    override val currentRoundUserText: StateFlow<String?> = session.currentRoundUserText
+    override val currentRoundAiText: StateFlow<String?> = session.currentRoundAiText
+    override val audioLevel: StateFlow<Float> = session.audioLevel
 
-    private var isSpeechInterruptionEnabled = false
+    // VAD Interruption Shielding State Machine to prevent echo leakage during playback transitions
+    private enum class ShieldingMode {
+        NONE,
+        STOP_TRANSIENT,   // 200ms tail leakage shielding when TTS stops
+        START_TRANSIENT   // 500ms start leakage shielding during AEC convergence
+    }
+
+    @Volatile
+    private var currentShieldingMode = ShieldingMode.NONE
+
+    @Volatile
+    private var hasSpeechActiveDuringShielding = false
+
+    @Volatile
+    private var isFirstAudioFrameOfRound = true
+
+    private var isBuffering = false
+    private val audioBuffer = mutableListOf<ByteArray>()
+    private var bufferJob: Job? = null
 
     init {
+        // Collect Network Communication Events
         scope.launch {
             netCommService.events.collect { event ->
-                when (event) {
-                    is NetCommEvent.TextMessage -> {
-                        scope.launch { handleMessage(event.json) }
-                    }
+                try {
+                    when (event) {
+                        is NetCommEvent.TextMessage -> {
+                            val json = gson.fromJson(event.json, JsonObject::class.java)
+                            val type = json.get("type")?.asString ?: return@collect
+                            val sessionId = json.get("session_id")?.asString
 
-                    else -> { /* ignored */
+                            if (type == "mcp") {
+                                val payload = json.getAsJsonObject("payload") ?: return@collect
+                                scope.launch {
+                                    val responsePayload = mcpHandler.handleMcpRequest(payload)
+                                    val response = JsonObject().apply {
+                                        sessionId?.let { addProperty("session_id", it) }
+                                        addProperty("type", "mcp")
+                                        add("payload", responsePayload)
+                                    }
+                                    netCommService.sendRawText(gson.toJson(response))
+                                }
+                            } else if (session.isActive) {
+                                when (type) {
+                                    "stt" -> {
+                                        val text = json.get("text")?.asString ?: ""
+                                        if (text.isNotBlank()) handleSttResult(text)
+                                    }
+                                    "tts" -> {
+                                        val state = json.get("state")?.asString
+                                        when (state) {
+                                            "start" -> handleTtsStart()
+                                            "stop" -> handleTtsStop()
+                                            "sentence_start" -> {
+                                                val text = json.get("text")?.asString ?: ""
+                                                if (text.isNotBlank()) handleTtsSentence(text)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        is NetCommEvent.AudioFrame -> {
+                            if (session.isActive) {
+                                handleTtsAudioFrame(event.data)
+                            }
+                        }
+                        else -> {}
                     }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error processing network event", e)
                 }
             }
         }
+
+        // Collect Audio Events (VAD / Speech Level)
+        scope.launch {
+            audioService.events.collect { event ->
+                if (session.isActive || event is AudioEvent.VoiceLevel) {
+                    handleAudioEvent(event)
+                }
+            }
+        }
+
         Log.d(TAG, "XiaozhiCloudBrain initialized, listening for events")
     }
 
-    /**
-     * Parse incoming JSON text and route to the appropriate handler.
-     */
-    private fun handleMessage(jsonStr: String) {
-        try {
-            val json = gson.fromJson(jsonStr, JsonObject::class.java)
-            val type = json.get("type")?.asString ?: return
-            val sessionId = json.get("session_id")?.asString
-
-            when (type) {
-                "mcp" -> {
-                    val payload = json.getAsJsonObject("payload") ?: return
-                    handleMcpPayload(payload, sessionId)
+    private fun handleAudioEvent(event: AudioEvent) {
+        when (event) {
+            is AudioEvent.SpeechData -> {
+                if (session.brainState.value == BrainState.LISTENING) {
+                    if (isBuffering) {
+                        audioBuffer.add(event.data)
+                    } else {
+                        netCommService.sendAudio(event.data)
+                    }
                 }
-
-                "tts" -> {
-                    val state = json.get("state")?.asString
-                    when (state) {
-                        "start" -> {
-                            _brainState.value = BrainState.SPEAKING
-                            if (!isSpeechInterruptionEnabled) {
-                                Log.d(
-                                    TAG,
-                                    "Speech Interruption disabled (Half-Duplex): Deactivating audio during TTS playback"
-                                )
-                                audioService.deactivate()
-                            }
-                        }
-
-                        "stop" -> {
-                            _brainState.value = BrainState.IDLE
+            }
+            is AudioEvent.VoiceLevel -> {
+                session.updateAudioLevel(event.level)
+            }
+            is AudioEvent.SpeechStart -> {
+                Log.d(TAG, "SpeechStart received, brainState=${session.brainState.value}, shieldingMode=$currentShieldingMode")
+                
+                // Process shielding modes first
+                when (currentShieldingMode) {
+                    ShieldingMode.STOP_TRANSIENT -> {
+                        Log.d(TAG, "SpeechStart ignored: STOP_TRANSIENT shielding active (fading out echo)")
+                        return
+                    }
+                    ShieldingMode.START_TRANSIENT -> {
+                        Log.d(TAG, "SpeechStart ignored: START_TRANSIENT shielding active, flagging deferred speech")
+                        hasSpeechActiveDuringShielding = true
+                        return
+                    }
+                    ShieldingMode.NONE -> {
+                        if (session.brainState.value == BrainState.SPEAKING) {
+                            Log.d(TAG, "User started speaking while AI is speaking, interrupting...")
+                            interruptSpeak(source = "vad_interrupt")
                         }
                     }
                 }
 
-                "stt" -> _brainState.value = BrainState.THINKING
+                if (session.brainState.value == BrainState.LISTENING) {
+                    Log.d(TAG, "Starting manual listening session on ASR server")
+                    netCommService.startListening("manual")
+                    isBuffering = true
+                    audioBuffer.clear()
+                    bufferJob?.cancel()
+                    bufferJob = scope.launch {
+                        delay(300)
+                        isBuffering = false
+                        val combined = audioBuffer.toList()
+                        audioBuffer.clear()
+                        combined.forEach {
+                            netCommService.sendAudio(it)
+                        }
+                    }
+                }
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse message: ${jsonStr.take(200)}", e)
-        }
-    }
-
-    /**
-     * Handle MCP JSON-RPC 2.0 requests from the cloud agent.
-     */
-    private fun handleMcpPayload(payload: JsonObject, sessionId: String?) {
-        val method = payload.get("method")?.asString ?: return
-        // Preserve original id as JsonElement to support string/number/null
-        val id = payload.get("id") ?: return
-
-        Log.d(TAG, "MCP request: method=$method, id=$id, sessionId=$sessionId")
-
-        when (method) {
-            "initialize" -> handleInitialize(id, sessionId)
-            "tools/list" -> handleToolsList(id, sessionId)
-            "tools/call" -> handleToolsCall(id, payload.getAsJsonObject("params"), sessionId)
-            else -> {
-                Log.w(TAG, "Unknown MCP method: $method")
-                sendMcpError(id, -32601, "Method not found: $method", sessionId)
+            is AudioEvent.SpeechEnd -> {
+                Log.d(TAG, "SpeechEnd received, brainState=${session.brainState.value}, shieldingMode=$currentShieldingMode")
+                if (currentShieldingMode == ShieldingMode.START_TRANSIENT) {
+                    Log.d(TAG, "SpeechEnd received during START_TRANSIENT shielding, clearing deferred speech flag")
+                    hasSpeechActiveDuringShielding = false
+                    return
+                }
+                if (session.brainState.value == BrainState.LISTENING) {
+                    Log.d(TAG, "User finished speaking. Stopping listening session and transitioning to THINKING")
+                    netCommService.stopListening()
+                    session.setBrainState(BrainState.THINKING)
+                    session.startThinkingTimeout {
+                        Log.w(TAG, "Thinking timeout reached! Reverting to LISTENING.")
+                        startNextRound()
+                    }
+                }
             }
+            else -> {}
         }
     }
 
-    /**
-     * Respond to MCP initialize handshake with protocol version and capabilities.
-     */
-    private fun handleInitialize(id: JsonElement, sessionId: String?) {
-        val result = JsonObject().apply {
-            addProperty("protocolVersion", MCP_PROTOCOL_VERSION)
-            add("capabilities", JsonObject().apply {
-                add("tools", JsonObject())
-            })
-            add("serverInfo", JsonObject().apply {
-                addProperty("name", "AiRobotClock")
-                addProperty("version", "1.0.0")
-            })
+    private fun handleTtsStart() {
+        Log.d(TAG, "TTS Start received, transitioning to SPEAKING")
+        session.cancelThinkingTimeout()
+        session.resetInactivityTimer {
+            stopAutoConversation()
         }
-        sendMcpResult(id, result, sessionId)
-        Log.d(TAG, "MCP initialize handshake completed")
+        session.setBrainState(BrainState.SPEAKING)
+
+        // Reset first audio frame flag for this round.
+        // We defer shielding to start when the first audio packet is actually played.
+        isFirstAudioFrameOfRound = true
+
+        if (!configManager.config.value.isSpeechInterruptionEnabled) {
+            Log.d(TAG, "Speech Interruption disabled (Half-Duplex): Deactivating audio during TTS playback")
+            audioService.deactivate()
+        }
     }
 
-    /**
-     * Respond with all registered tool schemas.
-     */
-    private fun handleToolsList(id: JsonElement, sessionId: String?) {
-        val schemas = skillManager.getAllSchemas()
-        val result = JsonObject().apply {
-            add("tools", schemas)
-        }
-        sendMcpResult(id, result, sessionId)
-        Log.d(TAG, "MCP tools/list: returned ${schemas.size()} tools")
-    }
+    private fun handleTtsStop() {
+        audioService.stopPlaying()
 
-    /**
-     * Dispatch a tool call to the SkillManager and send the result back.
-     */
-    private fun handleToolsCall(id: JsonElement, params: JsonObject?, sessionId: String?) {
-        val name = params?.get("name")?.asString
-        if (name == null) {
-            sendMcpError(id, -32602, "Missing 'name' in params", sessionId)
+        if (session.brainState.value != BrainState.SPEAKING) {
+            Log.d(TAG, "Ignoring TtsStop because brainState is ${session.brainState.value} (likely interrupted)")
             return
         }
 
-        val argsObj = params.getAsJsonObject("arguments")
-        val argsMap = mutableMapOf<String, Any>()
-        argsObj?.entrySet()?.forEach { entry ->
-            val value = entry.value
-            argsMap[entry.key] = when {
-                value.isJsonPrimitive -> {
-                    val prim = value.asJsonPrimitive
-                    when {
-                        prim.isNumber -> prim.asNumber
-                        prim.isBoolean -> prim.asBoolean
-                        else -> prim.asString
-                    }
-                }
-
-                else -> value.toString()
-            }
-        }
-
-        Log.d(TAG, "MCP tools/call: name=$name, args=$argsMap")
+        // Activate tail echo shielding (STOP_TRANSIENT) for 200ms when transitioning to Listening
+        currentShieldingMode = ShieldingMode.STOP_TRANSIENT
 
         scope.launch {
-            val skillResult = skillManager.dispatchToolCall(name, argsMap)
-            val isError = skillResult is SkillResult.Failure
-            val text = when (skillResult) {
-                is SkillResult.Success -> skillResult.message
-                is SkillResult.Failure -> skillResult.reason
+            delay(200)
+            if (currentShieldingMode == ShieldingMode.STOP_TRANSIENT) {
+                currentShieldingMode = ShieldingMode.NONE
+            }
+            if (session.brainState.value != BrainState.SPEAKING) {
+                Log.d(TAG, "Ignoring TtsStop transition because brainState changed during delay")
+                return@launch
             }
 
-            val result = JsonObject().apply {
-                add(
-                    "content", gson.toJsonTree(
-                        listOf(
-                            mapOf("type" to "text", "text" to text)
-                        )
-                    )
-                )
-                addProperty("isError", isError)
+            if (session.isAutoMode) {
+                startNextRound()
+            } else {
+                cleanConversation()
             }
-            sendMcpResult(id, result, sessionId)
-            Log.d(TAG, "MCP tools/call result: name=$name, isError=$isError, text=$text")
         }
     }
 
-    /**
-     * Send a successful MCP JSON-RPC response via raw WebSocket text.
-     */
-    private fun sendMcpResult(id: JsonElement, result: JsonObject, sessionId: String?) {
-        val response = JsonObject().apply {
-            sessionId?.let { addProperty("session_id", it) }
-            addProperty("type", "mcp")
-            add("payload", JsonObject().apply {
-                addProperty("jsonrpc", "2.0")
-                add("id", id)
-                add("result", result)
-            })
+    private fun handleTtsSentence(text: String) {
+        session.handleTtsSentence(text)
+        if (session.brainState.value != BrainState.SPEAKING) {
+            Log.d(TAG, "TtsSentence received, ensuring state is SPEAKING")
+            session.setBrainState(BrainState.SPEAKING)
         }
-        netCommService.sendRawText(gson.toJson(response))
     }
 
-    /**
-     * Send an MCP JSON-RPC error response.
-     */
-    private fun sendMcpError(id: JsonElement, code: Int, message: String, sessionId: String?) {
-        val response = JsonObject().apply {
-            sessionId?.let { addProperty("session_id", it) }
-            addProperty("type", "mcp")
-            add("payload", JsonObject().apply {
-                addProperty("jsonrpc", "2.0")
-                add("id", id)
-                add("error", JsonObject().apply {
-                    addProperty("code", code)
-                    addProperty("message", message)
-                })
-            })
+    private fun handleTtsAudioFrame(data: ByteArray) {
+        if (session.brainState.value == BrainState.SPEAKING) {
+            if (isFirstAudioFrameOfRound) {
+                isFirstAudioFrameOfRound = false
+                Log.d(TAG, "First TTS audio frame received, activating 600ms START_TRANSIENT shielding window.")
+                
+                // Activate AEC convergence shielding (START_TRANSIENT) for 600ms to ignore initial echo leakage.
+                // 600ms allows ~100ms for player device buffering startup + ~500ms for hardware AEC filter convergence.
+                currentShieldingMode = ShieldingMode.START_TRANSIENT
+                hasSpeechActiveDuringShielding = false
+                scope.launch {
+                    delay(600)
+                    if (currentShieldingMode == ShieldingMode.START_TRANSIENT) {
+                        currentShieldingMode = ShieldingMode.NONE
+                        // If VAD speech is still active after the shielding window, trigger deferred interruption
+                        if (hasSpeechActiveDuringShielding && session.brainState.value == BrainState.SPEAKING) {
+                            Log.d(TAG, "Speech detected during start shielding window persisted, triggering deferred interruption")
+                            interruptSpeak(source = "vad_interrupt")
+                        }
+                    }
+                }
+            }
+            audioService.play(data)
         }
-        netCommService.sendRawText(gson.toJson(response))
-        Log.w(TAG, "MCP error response: code=$code, message=$message")
+    }
+
+    private fun handleSttResult(text: String) {
+        session.cancelThinkingTimeout()
+        if (text.isNotBlank()) {
+            session.handleSttResult(text)
+            if (session.brainState.value == BrainState.LISTENING) {
+                Log.d(TAG, "STT received, transitioning LISTENING -> THINKING")
+                session.setBrainState(BrainState.THINKING)
+            }
+        }
+    }
+
+    private fun cleanConversation() {
+        Log.d(TAG, "cleanConversation: Deactivating audio and resetting state")
+        bufferJob?.cancel()
+        isBuffering = false
+        audioBuffer.clear()
+        
+        currentShieldingMode = ShieldingMode.NONE
+        hasSpeechActiveDuringShielding = false
+        isFirstAudioFrameOfRound = true
+
+        audioService.deactivate()
+        audioService.stopPlaying()
+
+        session.stopSession()
+    }
+
+    private fun startNextRound() {
+        bufferJob?.cancel()
+        isBuffering = false
+        audioBuffer.clear()
+        
+        currentShieldingMode = ShieldingMode.NONE
+        hasSpeechActiveDuringShielding = false
+        isFirstAudioFrameOfRound = true
+
+        if (!session.isAutoMode || !netCommService.isConnected) {
+            audioService.deactivate()
+            session.stopSession()
+            return
+        }
+        session.startNextRound()
+
+        audioService.activate()
+    }
+
+    // --- Conversation Control APIs ---
+
+    override fun startConversation(contextData: ByteArray?) {
+        if (!netCommService.isConnected) return
+        session.startSession(autoMode = true)
+        session.setBrainState(BrainState.LISTENING)
+
+        audioService.activate()
+
+        if (contextData != null) {
+            Log.d(TAG, "startConversation with contextData: starting manual listening session")
+            netCommService.startListening("manual")
+            netCommService.sendAudio(contextData)
+        }
+    }
+
+    override fun stopAutoConversation() {
+        netCommService.abort("stop_auto_mode")
+        cleanConversation()
+    }
+
+    override fun interrupt() {
+        netCommService.abort("user_interrupt")
+        cleanConversation()
+    }
+
+    override fun interruptSpeak(source: String) {
+        if (session.brainState.value != BrainState.SPEAKING) return
+
+        Log.d(TAG, "interruptSpeak triggered by source: $source, stopping playback and resuming listening")
+
+        // Add system message indicating speech was interrupted
+        session.addMessage(
+            Message(
+                role = MessageRole.SYSTEM,
+                content = context.getString(com.airobot.agent.R.string.dialogue_system_interrupted)
+            )
+        )
+
+        netCommService.abort("user_interrupt")
+        audioService.stopPlaying()
+        startNextRound()
+    }
+
+    override fun isSessionActive(): Boolean = session.isActive
+
+    override fun injectSystemMessage(content: String) {
+        session.addMessage(Message(role = MessageRole.SYSTEM, content = content))
     }
 
     override fun wakeUp() {
-        _brainState.value = BrainState.LISTENING
+        session.setBrainState(BrainState.LISTENING)
         netCommService.startListening("auto")
         Log.d(TAG, "wakeUp: switched to LISTENING")
     }
 
     override fun sleep() {
-        _brainState.value = BrainState.IDLE
+        session.setBrainState(BrainState.IDLE)
         netCommService.stopListening()
         Log.d(TAG, "sleep: switched to IDLE")
     }
-
-    override fun setSpeechInterruptionEnabled(enabled: Boolean) {
-        isSpeechInterruptionEnabled = enabled
-        Log.d(TAG, "setSpeechInterruptionEnabled: $enabled")
-    }
-
-    override fun isSpeechInterruptionEnabled(): Boolean = isSpeechInterruptionEnabled
 }

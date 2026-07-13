@@ -53,6 +53,8 @@ class PodcastViewModel @Inject constructor(
 
     val realPlaybackState: StateFlow<PlaybackState> = playbackDelegate.realPlaybackState
 
+    val playbackError: Flow<Int> = playbackDelegate.playbackError
+
     fun getPlayer(): Player? = playbackDelegate.getPlayer()
 
     init {

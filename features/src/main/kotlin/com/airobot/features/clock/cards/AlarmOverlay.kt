@@ -135,7 +135,8 @@ fun AlarmOverlay(
         onClose = onClose,
         enabled = !isRinging,
         backdropAlpha = backdropAlpha,
-        clickThrough = clickThrough
+        clickThrough = clickThrough,
+        isKeepAlive = isRinging
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),

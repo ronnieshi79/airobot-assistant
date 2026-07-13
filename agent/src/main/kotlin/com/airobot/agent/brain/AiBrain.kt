@@ -1,5 +1,6 @@
 package com.airobot.agent.brain
 
+import com.airobot.agent.brain.model.Message
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -20,10 +21,20 @@ enum class BrainState {
  */
 interface AiBrain {
     val brainState: StateFlow<BrainState>
+    val messages: StateFlow<List<Message>>
+    val currentRoundUserText: StateFlow<String?>
+    val currentRoundAiText: StateFlow<String?>
+    val audioLevel: StateFlow<Float>
 
     fun wakeUp()
     fun sleep()
 
-    fun setSpeechInterruptionEnabled(enabled: Boolean)
-    fun isSpeechInterruptionEnabled(): Boolean
+    // Conversation APIs
+    fun startConversation(contextData: ByteArray? = null)
+    fun stopAutoConversation()
+    fun interrupt()
+    fun interruptSpeak(source: String)
+    fun isSessionActive(): Boolean
+    fun injectSystemMessage(content: String)
 }
+

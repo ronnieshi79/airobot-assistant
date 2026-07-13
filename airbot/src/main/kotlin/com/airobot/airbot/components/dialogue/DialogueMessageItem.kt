@@ -20,8 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextOverflow
-import com.airobot.airbot.domain.model.Message
-import com.airobot.airbot.domain.model.MessageRole
+import com.airobot.agent.brain.model.Message
+import com.airobot.agent.brain.model.MessageRole
 import com.airobot.framework.theme.RobotTheme
 
 /**

@@ -31,7 +31,7 @@ import com.airobot.airbot.character.RobotCharacter
 import com.airobot.airbot.components.dialogue.DialoguePanel
 import com.airobot.airbot.components.interaction.VoiceInputPanel
 import com.airobot.airbot.domain.model.CharacterType
-import com.airobot.airbot.domain.model.Message
+import com.airobot.agent.brain.model.Message
 import com.airobot.airbot.viewmodel.RobotVisualState
 
 /**
