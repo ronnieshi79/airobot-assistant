@@ -1,7 +1,7 @@
 package com.airobot.airbot.domain
 
 import android.util.Log
-import com.airobot.agent.audio.AudioService
+import com.airobot.agent.manager.AgentManager
 import com.airobot.airbot.api.AirbotCharacterApi
 import com.airobot.airbot.data.CharacterConfig
 import com.airobot.airbot.data.CharacterRepo
@@ -19,7 +19,7 @@ import javax.inject.Singleton
 @Singleton
 class CharacterManagerImpl @Inject constructor(
     private val characterRepo: CharacterRepo,
-    private val audioService: AudioService
+    private val agentConfigManager: AgentManager
 ) : AirbotCharacterApi {
 
     companion object {
@@ -90,7 +90,9 @@ class CharacterManagerImpl @Inject constructor(
 
         val activeIndex = config.activeRoleIndex
         if (activeIndex in config.characterList.indices) {
-            _activeCharacter.value = config.characterList[activeIndex]
+            val activeRobot = config.characterList[activeIndex]
+            _activeCharacter.value = activeRobot
+            agentConfigManager.switchRole(activeRobot.roleName)
         }
 
         syncWakeWordsToAgent()
@@ -104,7 +106,9 @@ class CharacterManagerImpl @Inject constructor(
             currentConfig = currentConfig.copy(activeRoleIndex = newIndex)
             characterRepo.saveConfig(currentConfig)
 
-            _activeCharacter.value = robots[newIndex]
+            val newRobot = robots[newIndex]
+            _activeCharacter.value = newRobot
+            agentConfigManager.switchRole(roleName)
             syncWakeWordsToAgent()
 
             Log.d(TAG, "Switched character to $roleName")
@@ -117,7 +121,7 @@ class CharacterManagerImpl @Inject constructor(
 
     override suspend fun updateWakeWord(roleName: String, wakeWord: String): Boolean {
         // Validate wakeWord first before saving to config database
-        val tokenVariants = predefinedTokens[wakeWord] ?: audioService.convertTextToTokens(wakeWord)
+        val tokenVariants = predefinedTokens[wakeWord] ?: agentConfigManager.convertTextToTokens(wakeWord)
         if (tokenVariants.isEmpty()) {
             Log.w(TAG, "Rejecting invalid wakeWord: $wakeWord (Cannot convert to valid tokens)")
             return false
@@ -156,7 +160,7 @@ class CharacterManagerImpl @Inject constructor(
         val keywordLines = mutableListOf<String>()
 
         for (word in wakeWordsList) {
-            val tokenVariants = predefinedTokens[word] ?: audioService.convertTextToTokens(word)
+            val tokenVariants = predefinedTokens[word] ?: agentConfigManager.convertTextToTokens(word)
             for (tokens in tokenVariants) {
                 if (tokens.isNotBlank()) {
                     keywordLines.add("$tokens @$word")
@@ -164,7 +168,7 @@ class CharacterManagerImpl @Inject constructor(
             }
         }
 
-        audioService.updateKwsKeywords(keywordLines)
+        agentConfigManager.updateKwsKeywords(keywordLines)
         Log.d(
             TAG,
             "Synchronized wake words for active character ${activeRobot.roleName} to Agent: $wakeWordsList"

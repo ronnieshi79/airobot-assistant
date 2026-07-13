@@ -28,6 +28,8 @@ fun OverlayTabsScaffold(
     onClose: () -> Unit,
     enabled: Boolean = true,
     isDark: Boolean = RobotTheme.isDark,
+    timeoutDurationMs: Long = 60000L,
+    isKeepAlive: Boolean = false,
     tabs: @Composable ColumnScope.() -> Unit,
     content: @Composable BoxScope.() -> Unit
 ) {
@@ -35,7 +37,9 @@ fun OverlayTabsScaffold(
 
     OverlayBackdrop(
         onClose = onClose,
-        enabled = enabled
+        enabled = enabled,
+        timeoutDurationMs = timeoutDurationMs,
+        isKeepAlive = isKeepAlive
     ) {
         BoxWithConstraints(
             modifier = Modifier.fillMaxSize(),

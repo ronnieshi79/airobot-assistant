@@ -254,7 +254,8 @@ fun TimerOverlay(
                 onClose()
             }
         },
-        enabled = isFinished || (!isLocked && !isRunning)
+        enabled = isFinished || (!isLocked && !isRunning),
+        isKeepAlive = isRunning
     ) {
         Box(
             modifier = Modifier

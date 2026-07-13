@@ -169,6 +169,7 @@ fun PodcastPlayerOverlay(
             onClose = onClose,
             enabled = true,
             isDark = isDark,
+            isKeepAlive = isPlaying,
             tabs = {
                 // Tab 1: Play/Pause control
                 OverlayHangingTab(

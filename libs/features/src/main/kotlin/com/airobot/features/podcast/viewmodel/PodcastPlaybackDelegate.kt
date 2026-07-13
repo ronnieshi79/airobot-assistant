@@ -567,7 +567,29 @@ class PodcastPlaybackDelegate @Inject constructor(
         if (_isPlaying.value) return // already playing
 
         if (currentActive.isDiy && currentActive.mediaUri != null) {
-            playbackService.resume()
+            val playerState = playbackService.playbackState.value
+            val isStopped = playerState.activeEpisodeId == null
+            val exo = playbackService.getPlayer()
+            val isIdleOrEnded = exo == null || exo.playbackState == Player.STATE_IDLE || exo.playbackState == Player.STATE_ENDED
+
+            if (isStopped || isIdleOrEnded) {
+                // If it ended or is stopped, we should play/re-prepare it
+                val isEndedState = exo?.playbackState == Player.STATE_ENDED || currentActive.progress >= 95f
+                val startPos = if (isEndedState) 0L else currentActive.lastPositionMs
+                if (isEndedState) {
+                    _progress.value = 0f
+                    _activeEpisode.value = currentActive.copy(progress = 0f, lastPositionMs = 0L)
+                }
+                playbackService.play(
+                    episodeId = currentActive.id,
+                    mediaUri = currentActive.mediaUri,
+                    startPositionMs = startPos
+                )
+                _isPlaying.value = true
+                wasLastCompleted = false
+            } else {
+                playbackService.resume()
+            }
         } else {
             delegateScope.launch {
                 _playbackError.emit(R.string.podcast_error_invalid_demo_data)
