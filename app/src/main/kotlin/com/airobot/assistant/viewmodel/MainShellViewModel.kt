@@ -21,6 +21,7 @@ import com.airobot.airbot.api.AirbotCharacterApi
 import com.airobot.agent.audio.AudioEvent
 import com.airobot.agent.audio.AudioService
 import com.airobot.agent.brain.AiBrain
+import com.airobot.agent.manager.AgentManager
 
 /**
  * 主外壳控制 ViewModel
@@ -33,7 +34,8 @@ class MainShellViewModel @Inject constructor(
     private val airbotCharacterApi: AirbotCharacterApi,
     private val sysManage: SysManage,
     private val audioService: AudioService,
-    private val aiBrain: AiBrain
+    private val aiBrain: AiBrain,
+    private val agentManager: AgentManager
 ) : ViewModel() {
 
     val robotState: StateFlow<RobotState> = airbotEngineApi.robotState
@@ -284,13 +286,14 @@ class MainShellViewModel @Inject constructor(
         }
     }
 
-    private val _isSpeechInterruptionEnabled =
-        MutableStateFlow(aiBrain.isSpeechInterruptionEnabled())
-    val isSpeechInterruptionEnabled: StateFlow<Boolean> = _isSpeechInterruptionEnabled.asStateFlow()
+    val isSpeechInterruptionEnabled: StateFlow<Boolean> = agentManager.config
+        .map { it.isSpeechInterruptionEnabled }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     fun setSpeechInterruptionEnabled(enabled: Boolean) {
-        aiBrain.setSpeechInterruptionEnabled(enabled)
-        _isSpeechInterruptionEnabled.value = enabled
+        viewModelScope.launch {
+            agentManager.setSpeechInterruptionEnabled(enabled)
+        }
     }
 
     override fun onCleared() {
