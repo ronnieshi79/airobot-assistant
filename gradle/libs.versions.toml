@@ -1,4 +1,5 @@
 [versions]
+room = "2.6.1"
 rive = "11.6.1"
 startup = "1.1.1"
 accompanistPermissions = "0.37.3"
@@ -26,6 +27,9 @@ datastore = "1.2.0"
 media3 = "1.6.1"
 
 [libraries]
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 rive-android = { module = "app.rive:rive-android", version.ref = "rive" }
 androidx-startup = { module = "androidx.startup:startup-runtime", version.ref = "startup" }
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
